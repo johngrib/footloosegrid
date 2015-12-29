@@ -1,1 +1,2 @@
 # FootlooseGrid
+simple javascript grid

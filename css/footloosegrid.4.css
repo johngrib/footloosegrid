@@ -1,0 +1,415 @@
+@CHARSET "UTF-8";
+
+/* div ----------------------------------------------- */
+._fg_main_div { 
+	position: relative;
+	background-color: white;
+}
+
+._fg_div_cover{
+	position: absolute;
+	left: 0px;
+	top: 0px;
+	width: 100%;
+	height: 100%;
+	z-index: 99;
+	background-color: #B6B6B6;
+	opacity: 0.6;
+	display: none;
+}
+
+._fg_div_filter{
+	position: absolute;
+	left: 0px;
+	top: 0px;
+/*  	width: 600px; */
+/*  	height: 400px; */
+	z-index: 500;
+	background-color: #F0F0F0;
+	opacity: 1;
+ 	display: none;
+ 	border: 1px solid grey;
+    border-top-right-radius: 8px;
+    border-bottom-left-radius: 8px;
+    border-bottom-right-radius: 8px;
+}
+
+._fg_div_filter *, ._fg_div_search *, ._fg_div_modal *{
+	font: normal 11pt '맑은 고딕',Malgun Gothic,'맑은 고딕',Gulim,'굴림',sans-serif;
+	margin: 4px;
+}
+
+._fg_div_search table, ._fg_div_search table * {
+	margin: 0px;
+}
+
+._fg_div_filter input[type=checkbox] {
+	width: 20px;
+	height: 20px;
+}
+
+._fg_div_search{
+	position: absolute;
+	left: 0px;
+	top: 0px;
+/*  	width: 300px;
+  	height: 400px; */
+	z-index: 500;
+	background-color: #F0F0F0;
+	opacity: 1;
+ 	display: none;
+ 	border: 1px solid grey;
+    border-top-right-radius: 8px;
+    border-bottom-left-radius: 8px;
+    border-bottom-right-radius: 8px;
+}
+
+._fg_div_modal{
+	position: absolute;
+	left: 0px;
+	top: 0px;
+  	width: 350px;
+	z-index: 501;
+	background-color: #F0F0F0;
+	opacity: 1;
+ 	display: none;
+ 	border: 1px solid grey;
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+    border-bottom-left-radius: 8px;
+    border-bottom-right-radius: 8px;
+}
+
+._fg_modal_content[role=title]{
+    border: 1px solid #4863A0;
+}
+._fg_modal_content{
+	position: relative;
+    padding: 6px;
+/*    	background-color: #4863A0; */
+    border-top-left-radius: 4px;
+    border-top-right-radius: 4px;
+    border-bottom-left-radius: 4px;
+    border-bottom-right-radius: 4px;
+}
+
+._fg_div_right, ._fg_div_left, ._fg_div_bot_right {
+	position: relative;	/* IE8 의 no position - overflow hidden 버그를 방지하기 위함. IE 9 부터는 사라진 버그 */
+	overflow: hidden;
+}
+
+._fg_div_00, ._fg_div_01 { 
+   	background-color: #4863A0;
+}
+
+._fg_div_10, ._fg_div_11, ._fg_div_30 { 
+   	background-color: #FFF380;
+   	overflow: hidden;
+}
+
+._fg_div_00, ._fg_div_10, ._fg_div_20, ._fg_div_30 { 
+ 	border-left: 1px solid #B6B6B6; }
+
+._fg_div_00, ._fg_div_10, ._fg_div_20, ._fg_div_30, ._fg_div_right { 
+ 	border-right: 1px solid #B6B6B6; }
+
+._fg_div_20, ._fg_div_21, ._fg_div_30, ._fg_div_bot_left, ._fg_div_bot_right { 
+ 	border-bottom: 1px solid #B6B6B6; }
+
+._fg_div_00, ._fg_div_01, ._fg_div_20, ._fg_div_21 { 
+	overflow: hidden; }
+
+._fg_div_00, ._fg_div_01, ._fg_div_10, ._fg_div_11, ._fg_div_30, ._fg_div_31 {
+	position: relative; }
+
+._fg_div_02 { /* top_empty */
+}
+
+._fg_div_20 { /* row_label */
+   	background-color: transparent;
+}
+
+._fg_div_21 { /* data_table */
+   	background-color: transparent;
+}
+
+._fg_div_22 { /* scroll_v */
+	overflow-x: auto;	
+	overflow-y: hidden;	}
+
+._fg_div_31 { /* scroll_h */
+	overflow-x: scroll;
+	overflow-y: hidden;	}
+
+._fg_div_40 { }
+
+/* cell */
+._fg_cell, ._fg_calc, ._fg_label_text {
+	position: absolute; }
+
+._fg_cell {
+	overflow: hidden; 
+   	border-left: 1px solid #B6B6B6;
+	border-top: 1px solid #B6B6B6;
+}
+
+._fg_calc {
+	overflow: hidden; 
+	resize: none;
+	background-color: transparent;
+	border: 0px;
+	padding: 0px;
+	margin: 0px; 
+   	border-left: 1px solid #B6B6B6;
+	border-bottom: 1px solid #B6B6B6;
+	font: normal 13pt '맑은 고딕',Malgun Gothic,'맑은 고딕',Gulim,'굴림',sans-serif; }
+
+
+._fg_label_text {
+   	background-color: transparent;
+	top: 0px;
+	left: 0px;
+	cursor: pointer;
+}
+
+/* inner cell */
+._fg_input_text, ._fg_input_select, ._fg_input_div, ._fg_input_check, ._fg_label_text, ._fg_input_img {
+ 	overflow: hidden;
+	resize: none;
+	border: 0px;
+	padding: 0px;
+	margin: 0px; 
+	font: normal 11pt '맑은 고딕',Malgun Gothic,'맑은 고딕',Gulim,'굴림',sans-serif; }
+
+._fg_input_text, ._fg_input_select, ._fg_input_div, ._fg_input_img {
+	border-left: 1px solid #B6B6B6;
+	border-top: 1px solid #B6B6B6;
+}
+
+._fg_input_text, ._fg_input_select, ._fg_input_div, ._fg_input_img {
+	position: absolute;
+	height: 100%; }
+
+._fg_input_text, ._fg_label_text, ._fg_input_img {
+/* 	text-indent: 5px;  */
+}
+
+._fg_input_img {
+	background-repeat: no-repeat;
+}
+
+._fg_input_text:disabled {
+	color: #000000;
+}
+
+._fg_label_text {
+	position: absolute;
+    -webkit-highlight:           none;
+    -webkit-touch-callout :      none;
+    -webkit-user-select:         none;
+    text-indent: 5px;
+   	width : 100%;
+ 	color: white;}
+
+._fg_input_select:disabled {
+	color:#000000; 
+}
+
+._fg_input_text {
+	padding-left : 5px;
+	padding-right: 5px;
+}
+
+._fg_input_check { /* checkbox, radio button */
+/* 	position: absolute; */
+/* 	width: 100%; */
+/*   	opacity: 0;   */
+ 	}
+
+ /* row */
+._fg_row, ._fg_row_last {
+	width: 100%;
+	position: relative;
+	overflow: hidden; 
+	visible:block;
+	}
+
+._fg_row_last {
+	border-bottom: '1px solid #B6B6B6'; }
+
+/* scroll bar */
+._fg_scroll_h {
+	visibility: hidden;
+	height: 0px; }
+
+._fg_scroll_v {
+	visibility: hidden;
+	width: 0px; }
+	
+._fg_drill_btn {
+	padding: 0px;
+	margin: 3px;
+	border: 1px dotted;
+	width: 15px;
+	height: 15px;
+	background-color: transparent;
+	cursor: pointer;
+	border-radius: 3px;
+}
+
+._fg_drill_btn_minus {
+	padding: 0px;
+	margin: 0px;
+	border: 1px dotted;
+	width: 20px;
+	height: 15px;
+	background-color: transparent;
+	cursor: pointer;
+	border-radius: 3px;
+}
+
+._fg_drill_btn_empty {
+	padding: 0px;
+	margin: 0px;
+	border: 0px;
+	width: 20px;
+	height: 15px;
+	background-color: transparent;
+	border-radius: 3px;
+}
+
+._fg_sort_btn {
+/* 	background-color: transparent; */
+	font: normal 5pt '맑은 고딕',Malgun Gothic,'맑은 고딕',Gulim,'굴림',sans-serif; }
+}
+
+/* --------------------------------------------------- */
+
+/* paging buttons */
+._fg_paging_button, ._fg_paging_button_selected {
+	background-color: inherit;
+	border: 0px;
+}
+._fg_paging_button { 
+}
+._fg_paging_button_selected {
+	color: red;
+}
+
+._fg_filter_icon, ._fg_filter_icon_red {
+    z-index: 0;
+    position: absolute;
+    left: 2px;
+    top: 2px;
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+}
+
+._fg_filter_icon {
+	display: none;
+}
+
+._fg_filter_icon_red {
+	display: block;
+ 	background-position: -98px -226px;
+ 	background-image: url("images/ui-icons_222222_256x240.png"); 
+}
+
+._fg_filter_inner_btn {
+	position: relative;
+/* 	margin: 10px; */
+    border-top-left-radius: 4px;
+    border-top-right-radius: 4px;
+    border-bottom-left-radius: 4px;
+    border-bottom-right-radius: 4px;
+}
+
+._fg_filter_search_title {
+	position: absolute;
+	left: 0px;
+	width: 25px;
+	height: 22px;
+ 	background-position: -222px -220px;
+ 	background-image: url("images/ui-icons_222222_256x240.png"); 
+}
+
+._fg_filter_sort_title {
+	position: absolute;
+	left: 0px;
+	width: 45px;
+	height: 22px;
+ 	background-position: -172px -220px;
+ 	background-image: url("images/ui-icons_222222_256x240.png"); 
+}
+
+._fg_filter_filter_title {
+	position: absolute;
+	width: 47px;
+	height: 21px;
+ 	background-position: -114px -220px;
+ 	background-image: url("images/ui-icons_222222_256x240.png"); 
+}
+
+._fg_filter_sort_div {
+	position:relative;
+	border: 1px solid #4863A0;
+    border-top-left-radius: 4px;
+    border-top-right-radius: 4px;
+    border-bottom-left-radius: 4px;
+    border-bottom-right-radius: 4px;
+}
+
+._fg_filter_search_div {
+	position:relative;
+	border: 1px solid #4863A0;
+    border-top-left-radius: 4px;
+    border-top-right-radius: 4px;
+    border-bottom-left-radius: 4px;
+    border-bottom-right-radius: 4px;
+}
+
+._fg_filter_checkbox {
+	position:	relative; 
+	vertical-align: middle;
+}
+
+._fg_filter_input {
+	
+}
+
+._fg_filter_cond {
+	border-top: 1px solid transparent;
+}
+
+._fg_filter_plus_btn {
+	position:	relative; 
+	vertical-align: middle;
+	width: 20px;
+	height: 20px;
+ 	background-image: url("images/ui-icons_222222_256x240.png"); 
+ 	background-position: -33px -129px;
+}
+
+._fg_filter_minus_btn {
+	position:	relative; 
+	vertical-align: middle;
+	width: 20px;
+	height: 20px;
+ 	background-image: url("images/ui-icons_222222_256x240.png"); 
+ 	background-position: -64px -129px;
+}
+
+._fg_div_filter select[func=column] {
+	width: 150px;
+}
+._fg_div_filter select[func=operator] {
+	width: 70px;
+}
+._fg_div_filter select[func=condition] {
+	width: 120px;
+}
+._fg_div_filter input[func=value] {
+	width: 150px;
+ 	text-indent: 5px;
+}
