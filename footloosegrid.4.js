@@ -75,6 +75,9 @@ var footloosegrid = (function _create_footloosegrid_function($){
   var _to_comma_format = (function(){
     var reg = /\B(?=(\d{3})+(?!\d))/g;
     return function(num){
+      if(num == null)
+        return num;
+
       var v = num.toString(),
         dot = v.indexOf('.'),
         head, tail;
@@ -403,6 +406,8 @@ function _config_initialize(cfg) {
  */
 function _scheme_initialize(scheme){
 
+  this.get_cell_define     = _make_const_getter(_create_cell_define(this));  // cell 의 type 에 따른 특징과 기능을 보관한다
+
   var date_cfg = (this.cfg.date) ? _insert_undefined_values(this.cfg.date, _default_date_config)
       : _default_date_config,
     def, set, point_length;
@@ -417,31 +422,68 @@ function _scheme_initialize(scheme){
       column = _insert_undefined_values(column, def);
     }
 
-    column.init_width = column.width;  // 컬럼 초기 width 를 설정한다
+    // 컬럼 초기 width 를 설정한다
+    column.init_width = column.width;  
 
     // edit false 라면 읽기 전용 배경색을 지정해 준다
     if(!column.bg_color && column.edit === false)
       column.bg_color = _style.readonly;
 
-    if(column.size && _.isNumber(column.size)){
-      column.format_regexp = new RegExp('(^.{0,' + _toInt(column.size) + '}).*$');
-    } else if(column.format){
-      point_length = column.format.replace(/^(#+\.)/, '').length;
-      column.format_regexp = new RegExp('(^[^\\.]+(?:\\..{1,' + point_length + '})).*$');
-    }
-
-    set = this.get_cell_define()[column.type];  // cell 타입별 정의를 참조한다.
+    // cell 타입별 정의를 참조한다.
+    set = this.get_cell_define()[column.type];  
 
     column.element = set.element;
-    column.getter  = column.getter || set.getter;  // 사용자가 설정한 getter 우선
-    column.setter  = column.setter || set.setter;  // 사용자가 설정한 setter 우선
-    column.data_push = column.data_push || set.data_push;
+
+    // 사용자가 설정한 getter 우선
+    column.getter  = column.getter || set.getter;  
+
     column.init_data = (column.init_data === undefined) ? set.init_data : column.init_data;
     column.width_adj = set.width_adj;
 
     if(column.type === 'date'){
       column.date = (column.date) ? _insert_undefined_values(column.date, date_cfg) : date_cfg;
     }
+
+    if(! column.format_regexp && column.size && _.isNumber(column.size)){
+      column.format_regexp = new RegExp('(^.{0,' + _toInt(column.size) + '}).*$');
+    } else if(column.format){
+      point_length = column.format.replace(/^(#+\.)/, '').length;
+      column.format_regexp = new RegExp('(^[^\\.]+(?:\\..{1,' + point_length + '})).*$');
+    }
+    
+    /*
+    if(column.format_regexp){
+      column.formatter = function(v) { return (v).toString().replace(column.format_regexp, '$1'); };
+    }
+    */
+    
+    // output functions
+    column.setter           = column.setter           || set.setter;
+    column.output_validator = column.output_validator || set.output_validator;
+    column.output_formatter = column.output_formatter || set.output_formatter;
+    column.output_css       = column.output_css       || set.output_css;
+    column.init_data        = column.init_data        || set.init_data;
+
+    /*
+     * data 를 화면에 보여주는 setter function wrapping 작업
+     * combined setter : validator + output_css + formatter + setter
+     */
+    column.setter = (function(column, set){
+      var out_css = column.output_css,
+        validator = column.output_validator,
+        formatter = column.output_formatter,
+        init_data = column.init_data,
+        setter    = column.setter,
+        setter2   = (formatter) ? function($cell, v){ return setter($cell, formatter(v)); } : setter,
+        setter3   = (out_css)   ? function($cell, v){ return setter2($cell.css(out_css(v)), v); } : setter2,
+        setter4   = (validator) ? function($cell, v){ return setter3($cell, validator(v) ? v : init_data); } : setter3; 
+      return setter4;
+    })(column, set);
+
+    column.data_push       = column.data_push       || set.data_push;
+    column.input_validator = column.input_validator || set.input_validator;
+    column.input_formatter = column.input_formatter || set.input_formatter;
+
     return column;
   }, this);
 
@@ -461,8 +503,12 @@ FGR.prototype.event_handler.change_val = function(e, evt_process) {
   var loc    = this.get_loc(e.target),
     column = this.scheme[loc.col],
     before = this.data[loc.row][loc.col],
+    //vv     = column.getter($(e.target)),
     value  = column.data_push($(e.target), loc),
     cell, after; 
+
+  //print(vv);
+  //print(value);
 
   cell = this.event_handler.cell = {
     loc      : loc,
@@ -603,11 +649,15 @@ function _create_cell_define(_this){
 
   focus_out = _set_interceptor_2_(focus_out, change_val, false);  // focus_out 실행전에는 change_val 이 먼저 실행된다
   focus_num = _set_interceptor_2_(focus_num, focus_in, undefined);  // focus_num 실행전에는 focus_in 이 먼저 실행된다
+  
+  /*
+   * data_push 는 화면 상의 문자열을 가공하여 data 배열에 입력할 값으로 변경해주는 함수이다.
+   * 화면 상 셀의 값은 모두 문자이기 때문에 이 변경은 숫자 형식인 경우 특히 중요하다.
+   */
 
   // data types *********************************
   cell_def.str = {
-    element   : 'textarea',
-    //element   : 'input',
+    element   : 'input',
     type      : 'text',
     style     : _style.input,
     width_adj : -11,
@@ -642,33 +692,33 @@ function _create_cell_define(_this){
   };
 
   cell_def.number = {
-    element   : 'textarea',
+    element   : 'input',
     type      : 'text',
     style     : _style.input,
     width_adj : -11,
+    output_css      : function(v){ return { color: (v < 0) ? 'red' : 'black' }; }, // return css style by number
+    output_validator: _.isNumber,
+    output_formatter: _to_comma_format, // return number comma format applied
     getter    : std_getter,
-    setter    : function($cell, v){ 
-      if(_.isNumber(v)){
-        $cell.css('color', (v < 0) ? 'red':'black');
-        v = _to_comma_format(v);
-      } else {
-        v = null;
-      }
-      return $cell.val(v); },
+    setter    : std_setter,
     init_data : null,
     event : {
       keydown : key_down,
       keyup   : change_val,
       focusin : focus_num,
       focusout: focus_out_num },
-    data_push : function($cell, loc){
+    //input_css : // same with output_css
+    input_validator: _is_number_str,
+    input_formatter: function(v) { return v.replace(/,/g, ''); },
+    //data_push : function($cell, loc){return $cell.val();}
+    data_push : function($cell, loc, v){
       var v = $cell.val().replace(/,/g, ''),
         nv;
       if(_is_number_str(v)){
         nv = Number(_this.apply_data_size(v, loc.col));
         $cell.css('color', (nv<0) ? 'red' : 'black');
         return nv;
-      } else if(v === null || v === undefined || /^\s*$/.test(v)) {
+      } else if(v == null || /^\s*$/.test(v)) {
         return null;
       }
       return _this.data[loc.row][loc.col]; }
@@ -683,7 +733,7 @@ function _create_cell_define(_this){
     setter    : check_setter,
     init_data : 0,
     event : { change : change_val },
-    data_push : function($cell, loc){return $cell.prop('checked') ? 1 : 0;}
+    data_push : function($cell, loc, v){return $cell.prop('checked') ? 1 : 0;}
   };
 
   cell_def.radio = {
@@ -697,7 +747,7 @@ function _create_cell_define(_this){
     event : {
       focusin : focus_in,
       change  : change_val },
-    data_push : function($cell, loc){
+    data_push : function($cell, loc, v){
       // 필터링 된 상태에서 라디오 버튼을클릭한다면, pre_filter_data 의 라디오 버튼 값을 청소해 주어야 한다
       // 필터를 풀었을 때, 라디오 버튼 값이 1 개를 초과할 일을 방지하기 위함.
       var data = (_this.pre_filter_data) ? _this.pre_filter_data : _this.data;
@@ -717,7 +767,7 @@ function _create_cell_define(_this){
     event : {
       focusin : focus_in,
       change  : change_val },
-    data_push : function($cell, loc){return $cell.val();}
+    data_push : function($cell, loc, v){return $cell.val();}
   };
 
   cell_def.date = {
@@ -734,7 +784,7 @@ function _create_cell_define(_this){
       keydown : key_down,
       change  : change_val,
       keyup   : change_val },
-    data_push : function($cell){return $cell.val();}
+    data_push : function($cell, loc, v){return $cell.val();}
   };
 
   cell_def.gen = {
@@ -838,7 +888,6 @@ function FGR(id, cfg, scheme) {
   this.get_IE_version      = _make_const_getter(_check_ie_version());
   this.is_IE               = _make_const_getter(_check_ie_version() > 0);
   this.is_IE               = _make_const_getter(this.get_IE_version() > 0);
-  this.get_cell_define     = _make_const_getter(_create_cell_define(this));  // cell 의 type 에 따른 특징과 기능을 보관한다
 
   // TODO : 전역변수 closure 작업중
 
