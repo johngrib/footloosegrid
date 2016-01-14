@@ -493,7 +493,8 @@ function _scheme_initialize(scheme){
       validator = column.input_validator,
       slicer    = column.input_slicer,
       caster    = column.input_caster,
-      out_css   = column.output_css;
+      out_css   = column.output_css,
+      after_input = column.after_input;
   
     return function($cell, loc, value){
       var v_string = (formatter) ? formatter(value) : value;
@@ -512,6 +513,9 @@ function _scheme_initialize(scheme){
 
       if($cell && out_css)
         $cell.css(out_css(value));
+      
+      if(after_input)
+        after_input($cell, loc, value);
 
       return value;
     };
@@ -790,15 +794,21 @@ function _create_cell_define(_this){
     //input_validator: _.isString,
     //input_formatter: undefined,
     //input_caster   : String,
+    after_input: function($cell, loc, value){
+      var data = (_this.pre_filter_data) ? _this.pre_filter_data : _this.data;
+      data.forEach(function(v){ v[loc.col] = 0; });
+    },
     event : {
       focusin : focus_in,
-      change  : change_val },
+      change  : change_val }
+      /*
     data_push : function($cell, loc, v){
       // 필터링 된 상태에서 라디오 버튼을클릭한다면, pre_filter_data 의 라디오 버튼 값을 청소해 주어야 한다
       // 필터를 풀었을 때, 라디오 버튼 값이 1 개를 초과할 일을 방지하기 위함.
       var data = (_this.pre_filter_data) ? _this.pre_filter_data : _this.data;
       data.forEach(function(v){ v[loc.col] = 0; });
       return 1; }
+      */
   };
 
   cell_def.select = {
