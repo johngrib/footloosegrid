@@ -451,11 +451,11 @@ function _scheme_initialize(scheme){
       column.format_regexp = new RegExp('(^[^\\.]+(?:\\..{1,' + point_length + '})).*$');
     }
     
-    /*
     if(column.format_regexp){
-      column.formatter = function(v) { return (v).toString().replace(column.format_regexp, '$1'); };
+      column.input_slicer  = (function(format){
+        return function(v){ return String(v).replace(format, '$1'); };
+      })(column.format_regexp);
     }
-    */
     
     // output functions
     column.setter           = column.setter           || set.setter;
@@ -480,9 +480,42 @@ function _scheme_initialize(scheme){
       return setter4;
     })(column, set);
 
-    column.data_push       = column.data_push       || set.data_push;
+    // input functions
+    column.getter          = column.getter          || set.getter;
     column.input_validator = column.input_validator || set.input_validator;
     column.input_formatter = column.input_formatter || set.input_formatter;
+    column.input_caster    = column.input_caster    || set.input_caster;
+
+  column.data_push = (function data_push(){
+
+    var getter  = column.getter,
+      formatter = column.input_formatter,
+      validator = column.input_validator,
+      slicer    = column.input_slicer,
+      caster    = column.input_caster,
+      out_css   = column.output_css;
+  
+    return function($cell, loc, value){
+      var v_string = (formatter) ? formatter(value) : value;
+  
+      if(! validator) {
+        // validator 가 없다면 입력한 값을 그냥 사용한다.
+        value = v_string;   
+      } else if(validator(v_string)){
+        // validator 가 있다면 검사를 통과해야만 값을 입력해 준다.
+        v_string = slicer ? slicer(v_string) : v_string;
+        value = caster ? caster(v_string) : v_string;
+      } else {
+        // validator 검사를 통과하지 못했다면 이전 값을 유지한다.
+        value = before;
+      }
+
+      if($cell && out_css)
+        $cell.css(out_css(value));
+
+      return value;
+    };
+  })();
 
     return column;
   }, this);
@@ -500,15 +533,22 @@ FGR.prototype.event_handler = { };
 /** change_val : 값을 편집할 수 있게 하는 최중요 펑션 */
 FGR.prototype.event_handler.change_val = function(e, evt_process) {
 
-  var loc    = this.get_loc(e.target),
+  var loc  = this.get_loc(e.target),
     column = this.scheme[loc.col],
     before = this.data[loc.row][loc.col],
-    //vv     = column.getter($(e.target)),
-    value  = column.data_push($(e.target), loc),
-    cell, after; 
 
-  //print(vv);
-  //print(value);
+    $cell  = $(e.target),
+    formatter = column.input_formatter, // input_formatter 는 화면상의 cell 에 담긴 String 을 데이터화하기 좋은 String 으로 재가공한다.
+    validator = column.input_validator, // input_validator 는 화면상의 cell 에 담긴 String 이 형식에 맞는지 검사한다.
+    slicer    = column.input_slicer,    // input_slicer    는 formatter 가 리턴한 문자열을 지정된 길이로 자른다.
+    caster    = column.input_caster,    // input_caster    는 formatter 가 리턴한 문자열을 해당 타입으로 캐스팅한다. (예: 문자열을 숫자 타입으로 변환)
+    out_css   = column.output_css,      // output_css      는 값을 입력함과 동시에 cell 의 css 를 변경해준다.
+    value, cell, after; 
+  
+  // TODO : _scheme_initialize 에서 data_push 를 구성하도록 변경한다.
+  // TODO : paste 이벤트에서 data_push 를 사용하도록 변경한다.
+
+  value = column.data_push($cell, loc, column.getter($cell));
 
   cell = this.event_handler.cell = {
     loc      : loc,
@@ -639,7 +679,7 @@ function _create_cell_define(_this){
     text_setter  = function($cell,v){ return $cell.text(v);},
     text_getter  = function($cell  ){ return $cell.text( );},
     check_setter = function($cell,v){ return $cell.prop('checked', _.isNumber(v) && v > 0); },
-    check_getter = function($cell  ){ return $cell.prop('checked'); },
+    check_getter = function($cell  ){ return $cell.prop('checked') ? 1 : 0; },
     key_down     = function(e) { _move_focus(e, _this); },  // key_down 시 cursor focused 를 이동한다.
     change_val   = _this.event_handler.change_val.bind(_this),  // 값을 편집할 수 있게 하는 최중요 펑션
     focus_in     = _this.event_handler.focus_in.bind(_this),
@@ -661,18 +701,20 @@ function _create_cell_define(_this){
     type      : 'text',
     style     : _style.input,
     width_adj : -11,
+    //output_css      : undefined,
+    //output_validator: _.isString,
+    //output_formatter: undefined,
     getter    : std_getter,
     setter    : std_setter,
     init_data : null,
+    //input_validator: _.isString,
+    //input_formatter: undefined,
+    //input_caster   : String,
     event : {
       focusin : focus_in,
       focusout: focus_out,
       keydown : key_down,
-      keyup   : change_val },
-    data_push : function($cell, loc){ 
-      var v = _this.apply_data_size($cell.val(), loc.col);
-      $cell.val(v);
-      return v; }
+      keyup   : change_val }
   };
 
   cell_def.str_label = {  // 헤더에서 사용하는 셀 타입
@@ -680,15 +722,20 @@ function _create_cell_define(_this){
     type      : 'text',
     style     : _style.input,
     width_adj : -11,
+    //output_css      : undefined,
+    //output_validator: _.isString,
+    //output_formatter: undefined,
     getter    : std_getter,
     setter    : std_setter,
     init_data : null,
+    //input_validator: _.isString,
+    //input_formatter: undefined,
+    //input_caster   : String,
     event : {
       keydown : key_down,
       keyup   : change_val,
       focusin : focus_in,
-      focusout: focus_out },
-    data_push : function($cell, loc){return $cell.val();}
+      focusout: focus_out }
   };
 
   cell_def.number = {
@@ -702,26 +749,14 @@ function _create_cell_define(_this){
     getter    : std_getter,
     setter    : std_setter,
     init_data : null,
+    input_validator: _is_number_str,
+    input_formatter: function(v) { return v.replace(/,/g, ''); },
+    input_caster   : Number,
     event : {
       keydown : key_down,
       keyup   : change_val,
       focusin : focus_num,
-      focusout: focus_out_num },
-    //input_css : // same with output_css
-    input_validator: _is_number_str,
-    input_formatter: function(v) { return v.replace(/,/g, ''); },
-    //data_push : function($cell, loc){return $cell.val();}
-    data_push : function($cell, loc, v){
-      var v = $cell.val().replace(/,/g, ''),
-        nv;
-      if(_is_number_str(v)){
-        nv = Number(_this.apply_data_size(v, loc.col));
-        $cell.css('color', (nv<0) ? 'red' : 'black');
-        return nv;
-      } else if(v == null || /^\s*$/.test(v)) {
-        return null;
-      }
-      return _this.data[loc.row][loc.col]; }
+      focusout: focus_out_num }
   };
 
   cell_def.check = {
@@ -729,11 +764,16 @@ function _create_cell_define(_this){
     type      : 'checkbox',
     style     : _style.check,
     width_adj : 0,
+    //output_css      : undefined,
+    //output_validator: undefined,
+    //output_formatter: undefined,
     getter    : check_getter,
     setter    : check_setter,
     init_data : 0,
-    event : { change : change_val },
-    data_push : function($cell, loc, v){return $cell.prop('checked') ? 1 : 0;}
+    //input_validator: undefined,
+    //input_formatter: undefined,
+    //input_caster   : undefined,
+    event : { change : change_val }
   };
 
   cell_def.radio = {
@@ -741,9 +781,15 @@ function _create_cell_define(_this){
     type      : 'radio',
     style     : _style.check,
     width_adj : 0,
+    //output_css      : undefined,
+    //output_validator: _.isNumber,
+    //output_formatter: undefined,
     getter    : check_getter,
     setter    : check_setter,
     init_data : 0,
+    //input_validator: _.isString,
+    //input_formatter: undefined,
+    //input_caster   : String,
     event : {
       focusin : focus_in,
       change  : change_val },
@@ -759,11 +805,17 @@ function _create_cell_define(_this){
     element   : 'select',
     style     : _style.select,
     width_adj : 0,
+    //output_css      : undefined,
+    //output_validator: undefined,
+    //output_formatter: undefined,
     child     : 'option',  // child 는 select 의 하위에 들어갈 element name 이며,
     scheme    : 'option',  // scheme 은 사용자 설정에서 참고할 key 값이다.
     getter    : std_getter,
     setter    : std_setter,
     init_data : null,
+    //input_validator: undefined,
+    //input_formatter: undefined,
+    //input_caster   : undefined,
     event : {
       focusin : focus_in,
       change  : change_val },
@@ -775,9 +827,15 @@ function _create_cell_define(_this){
     type      : 'text',
     style     : _style.input,
     width_adj : -11,
+    //output_css      : undefined,
+    //output_validator: undefined,
+    //output_formatter: undefined,
     getter    : std_getter,
     setter    : std_setter,
     init_data : null,
+    //input_validator: undefined,
+    //input_formatter: undefined,
+    //input_caster   : undefined,
     event : {
       focusin : focus_in,
       focusout: focus_out,
@@ -792,8 +850,14 @@ function _create_cell_define(_this){
     type      : 'text',
     style     : _style.input,
     width_adj : -11,
+    //output_css      : undefined,
+    //output_validator: undefined,
+    //output_formatter: undefined,
     getter    : text_getter,
     setter    : text_setter,
+    //input_validator: undefined,
+    //input_formatter: undefined,
+    //input_caster   : undefined,
     init_data : ''
   };
 
@@ -802,8 +866,14 @@ function _create_cell_define(_this){
     type      : 'text',
     style     : _style.input,
     width_adj : 0,
+    //output_css      : undefined,
+    //output_validator: undefined,
+    //output_formatter: undefined,
     getter    : text_getter,
     setter    : text_setter,
+    //input_validator: undefined,
+    //input_formatter: undefined,
+    //input_caster   : undefined,
     init_data : ''
   };
 
@@ -812,6 +882,9 @@ function _create_cell_define(_this){
     type      : '',
     style     : _style.img,
     width_adj : 0,
+    //output_css      : undefined,
+    //output_validator: undefined,
+    //output_formatter: undefined,
     rule      : function(v){ return ''; },
     getter    : text_getter,
     setter    : function($cell, v, row, col){ 
@@ -819,6 +892,9 @@ function _create_cell_define(_this){
       $cell.text((v === null) ? '' : v);
       $cell.css('background-image', image);
     },
+    //input_validator: undefined,
+    //input_formatter: undefined,
+    //input_caster   : undefined,
     init_data : null
   };
 
@@ -1761,6 +1837,9 @@ function _create_cell(cell_scheme, element, index, height, mode){
     'class': (is_calc_row && is_checkbox) ? _style.idiv : set.style,
     type   : is_calc_row ? 'text' : set.type
   };
+  
+  if(_.isNumber(cell_scheme.size))
+    attr.maxlength = cell_scheme.size;
 
   // 2. 사용자 입력 cell 생성
   cell = $('<{e}>'.rep({e: element || set.element}), attr);
