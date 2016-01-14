@@ -408,6 +408,7 @@ function _scheme_initialize(scheme){
 
   this.get_cell_define     = _make_const_getter(_create_cell_define(this));  // cell 의 type 에 따른 특징과 기능을 보관한다
 
+  var _this = this;
   var date_cfg = (this.cfg.date) ? _insert_undefined_values(this.cfg.date, _default_date_config)
       : _default_date_config,
     def, set, point_length;
@@ -508,7 +509,7 @@ function _scheme_initialize(scheme){
         value = caster ? caster(v_string) : v_string;
       } else {
         // validator 검사를 통과하지 못했다면 이전 값을 유지한다.
-        value = before;
+        value = _this.data[loc.row][loc.col];
       }
 
       if($cell && out_css)
@@ -774,7 +775,7 @@ function _create_cell_define(_this){
     getter    : check_getter,
     setter    : check_setter,
     init_data : 0,
-    //input_validator: undefined,
+    input_validator: _.isNumber,
     //input_formatter: undefined,
     //input_caster   : undefined,
     event : { change : change_val }
@@ -795,20 +796,14 @@ function _create_cell_define(_this){
     //input_formatter: undefined,
     //input_caster   : String,
     after_input: function($cell, loc, value){
+      // 필터링 된 상태에서 라디오 버튼을클릭한다면, pre_filter_data 의 라디오 버튼 값을 청소해 주어야 한다
+      // 필터를 풀었을 때, 라디오 버튼 값이 1 개를 초과할 일을 방지하기 위함.
       var data = (_this.pre_filter_data) ? _this.pre_filter_data : _this.data;
       data.forEach(function(v){ v[loc.col] = 0; });
     },
     event : {
       focusin : focus_in,
       change  : change_val }
-      /*
-    data_push : function($cell, loc, v){
-      // 필터링 된 상태에서 라디오 버튼을클릭한다면, pre_filter_data 의 라디오 버튼 값을 청소해 주어야 한다
-      // 필터를 풀었을 때, 라디오 버튼 값이 1 개를 초과할 일을 방지하기 위함.
-      var data = (_this.pre_filter_data) ? _this.pre_filter_data : _this.data;
-      data.forEach(function(v){ v[loc.col] = 0; });
-      return 1; }
-      */
   };
 
   cell_def.select = {
@@ -828,8 +823,7 @@ function _create_cell_define(_this){
     //input_caster   : undefined,
     event : {
       focusin : focus_in,
-      change  : change_val },
-    data_push : function($cell, loc, v){return $cell.val();}
+      change  : change_val }
   };
 
   cell_def.date = {
@@ -851,8 +845,7 @@ function _create_cell_define(_this){
       focusout: focus_out,
       keydown : key_down,
       change  : change_val,
-      keyup   : change_val },
-    data_push : function($cell, loc, v){return $cell.val();}
+      keyup   : change_val }
   };
 
   cell_def.gen = {
@@ -2614,7 +2607,7 @@ function _attatch_evt_paste(_this){
       row  = _toInt($cell.attr('row')),
       col  = _toInt($cell.attr('col'));
     
-    var indexing = function(v, i) { 
+    var indexing = function(v, i) {
       //return v.split('\t').map(  (vv, j) => ({row: row + i, col: col + j, txt: vv })  ); 
       return v.split('\t').map( function(vv, j) { return ({row: row + i, col: col + j, txt: vv }); }); // #forInternetExplorer
     };
@@ -2651,19 +2644,10 @@ function _attatch_evt_paste(_this){
     // editable 셀이 아니라면 pass
     if( ! _this.is_editable_cell(dt.row, dt.col)) return true;
 
-    // TODO : 각 셀이 알아서 처리하도록 할 것.
-    // 사이즈 제한이 있는 컬럼의 경우, 데이터의 뒷부분을 자른다
-    var value = _this.apply_data_size(dt.txt, dt.col);
+    var data_push = _this.scheme[dt.col].data_push,
+      value       = data_push(undefined, dt, dt.txt),
+      data_row    = _this.data[dt.row];
 
-    // 숫자 타입 컬럼 처리
-    if('number' === _this.scheme[dt.col].type){
-      value = value.replace(/,|\s/g, '');
-      value = isEmpty(value) ? null : Number(value);
-      if(value !== null && isNaN(value))
-        value = null;
-    }
-    
-    var data_row = _this.data[dt.row];
     data_row[dt.col] = value;  // this.data 에 값을 입력한다.
   };
 
