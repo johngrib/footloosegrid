@@ -1971,27 +1971,30 @@ function _create_buttons(_this){
   
   function drill(event){
     
-    var gen_col    = _this.get_gen_col();
-    var row        = _toInt($(this).attr('row'));
-    var parent_row = _this.data[row];
-    var top_gen    = parent_row[gen_col];
-    var flag = {};
+    var gen_col  = _this.get_gen_col(),
+      row        = _toInt($(this).attr('row')),
+      parent_row = _this.data[row],
+      top_gen    = parent_row[gen_col],
+      flag       = {};
 
     flag[top_gen] = parent_row;
 
-    var hide_mode = !parent_row.children;
-
-    if(hide_mode){
+    if(! parent_row.children){
+      // drill up
+      
+      // loop : makeTree
       for (var i = row + 1; i < _this.data.length; i++) {
-        var this_row = _this.data[i];
-        var gen      = this_row[gen_col];
+        var this_row = _this.data[i],
+          gen        = this_row[gen_col];
         
         // drill 작업이 끝나면 break;
-        if(gen <= top_gen)
-          break;
+        if(gen <= top_gen) break;
 
+        // drill up 은 하위 아이템을 숨기는 작업이기 때문에 각 아이템의 부모가 누구인지를 잘 지정해 줘야 한다.
+        // flag 는 각 아이템의 부모가 될 아이템을 gen 넘버별로 모아놓는 곳이다.
         flag[gen] = this_row;
-        
+
+        // 1 단계 위 부모가 존재한다면 자식으로 등록하고, 숨김 대상으로 지정한다.
         if(flag[gen - 1]){
           if( ! flag[gen - 1].children){
             flag[gen - 1].children = [];
@@ -1999,8 +2002,9 @@ function _create_buttons(_this){
           this_row.hide = true;
           flag[gen - 1].children.push(this_row);
         }
-      }
+      } // end of loop : makeTree
       
+      // 숨김 대상을 제외한 나머지 데이터만 보여준다.
       var temp_data = [];
       for (var i = 0; i < _this.data.length; i++) {
         var this_row = _this.data[i];
@@ -2009,129 +2013,83 @@ function _create_buttons(_this){
       }
       
       _this.data = temp_data;
+
+      // end of drill up
+      
     } else {
+      // drill down
 
       remove_empty_rows();
 
+      // 숨김 표시를 해제한다.
       var temp_row = parent_row.children.map(function(r){ r.hide = false; return r;});
+      var head = _this.data.slice(0, row + 1);
+      var tail = _this.data.slice(row + 1);
       
-      var aa = _this.data.slice(0, row + 1);
-      var bb = _this.data.slice(row + 1);
-      
-      _this.data = aa.concat(temp_row, bb);
+      _this.data = head.concat(temp_row, tail);
       parent_row.children = undefined;
+    }
+    
+    
+    if(_this.data.length < _this.rows.length){
+      var last = _this.rows.length - _this.data.length;
+      var empty_rows = _this.create_init_data(last);
+      _this.data = _this.data.concat(empty_rows);
     }
     
     _this.data.map(function(r, index){ r.index = index; return r; });
     
-    
-    
-    _adjust_scroll_v(_this, _this.data.length, true);  // scroll bar 조정
+    _adjust_scroll_v(_this, _this.data.length);  // scroll bar 조정
     _this.refresh();
-  }
-
-  // private function
-  /*
-   * # 드릴다운 로직을 설명하는 python 인덴트 스타일의 의사 코드
-   * # 1 개의 parameter, 5 개의 variable 을 선언하며, 2 개의 loop 가 있다
-   *
-   * # row : drill 기능을 적용할 row 의 index 넘버
-   * def drill( row )
-   *
-   *  gen         = (현재 row 의 generation 넘버)
-   *  hide_mode   = (- 버튼을 클릭했다면 true, + 버튼을 클릭했다면 false)
-   *  button.text = (hide_mode) ? '+' : '-'
-   *  last_row    = (마지막 row 의 index 넘버)
-   *  target      = []  #(기능을 적용할 타깃 row 의 배열)
-   *
-   *  for i in range(row + 1 , last_row)
-   *    temp_gen = (i 번째 row 의 generation 넘버)
-   *
-   *  if(temp_gen >= gen)
-   *    break for;
-   *  else if(temp_gen - 1 == gen)
-   *    target.push(i)
-   *    if(hide_mode && row(i).has_a_button)
-   *      drill(i)  #재귀
-   *
-   *  for i in target
-   *    if(hide_mode)
-   *      row(i).hide
-   *    else
-   *      row(i).show
-   *
-   *  return 0;
-   *
-   * 재귀는 jQuery 의 click 펑션 등을 사용하여 +,- 버튼을 클릭하는 방식으로 이벤트를 발생시키면
-   * 웹 브라우저의 이벤트 큐에 클릭 이벤트가 삽입되는 방식으로 작동하므로 stack over flow 를 방지할 수 있음
-   *
-   * +계산결과,
-   * IE 8  의 call stack size 는 3061,
-   * IE 9  의 call stack size 는 12103,
-   * IE 10 의 call stack size 는 14033,
-   * IE 11 의 call stack size 는 1830,
-   * chrome의 call stack size 는 20946.
-   *
-   * generation 넘버가 1000 을 넘지 않는다면 문제는 없을 것이다.
-   */
-  function drill2(event, row, mode, fix_scroll, count){
-    if(row === undefined)
-      row = _toInt($(this).attr('row'));
-    if(count === undefined)
-      count = 0;
-
-    remove_empty_rows();
-
-    var gen    = _this.data[row][_this.get_gen_col()],
-      target = [],
-      hide_mode, cnt;
-
-    hide_mode = (_.isBoolean(mode)) ? mode 
-      : (!!_this.data[row+1] && !_this.data[row+1].hide);
-
-    _this.data[row].fold = hide_mode;
-
-    for(var i = row + 1; i < _this.data.length; ++i){
-      var temp_gen = _this.data[i][_this.get_gen_col()];
-      if(temp_gen <= gen){
-        break;
-      } else if(temp_gen - 1 === gen){
-        target.push(i);
-        if(_.isBoolean(mode) || (hide_mode && !_this.data[i].fold))
-          drill(event, i, mode, fix_scroll, 1);  // recursion
-      }
-    }
-    
-    target.forEach(function(v){ _this.data[v].hide = hide_mode; });
-
-    cnt = target.length * (hide_mode ? 1 : -1);
-    _this.hidden_row_cnt += cnt;
-
-    // 후처리 : 재귀가 끝난 후 실행되는 라인
-    if(count === 0){
-      _this.render_data(_this, _this.current_top_line);
-
-      for(var k = 0, index = 0; k < _this.data.length; ++k)
-        _this.data[k].index = (_this.data[k].hide) ? undefined : index++;
-
-      if(!fix_scroll)
-        _adjust_scroll_v(_this, _this.data.length, true);  // scroll bar 조정
-    }
-
     event.preventDefault();
-    return; }  // end of drill
+    
+    // end of drill down
+  }
 
   // 더블클릭시에는 모든 자식 node 를 전부 열어 보여준다
   function drill_straight(event){
-    var row = _toInt($(this).attr('row'));
-    drill(event, row, false, false, 1);
-    for(var i = 0, cnt = 0; i < _this.data.length; ++i){
-      if(_this.data[i].hide)
-        ++cnt;
-    }
-    _this.hidden_row_cnt = cnt;
-    _this.render_data(_this, _this.current_top_line);
+
+    var row      = _toInt($(this).attr('row')),
+      gen_col    = _this.get_gen_col(),
+      parent_row = _this.data[row],
+      top_gen    = parent_row[gen_col],
+      temp_head  = _this.data.slice(0, row + 1),
+      temp_body  = parent_row.children,
+      temp_tail  = _this.data.slice(row + 1),
+      temp_result;
+
+    if( ! _.isArray(temp_body))
+      return;
+    
+    // children 이 딸린 tree 구조의 배열을 하나의 배열로 평탄화하는 함수 
+    var platten = function platten(array){
+      for (var i = 0; i < array.length; i++) {
+        var row = array[i];
+        if(row.children){
+          var head = array.slice(0, i + 1),
+            body   = row.children,
+            tail   = array.slice(i + 1);
+          row.children = undefined;
+          array = head.concat(body, tail);
+        }
+      }
+      array = array.map(function(r){ r.hide = undefined; return r; });
+      return array;
+    };
+    
+    // start drill straight open
+    parent_row.children = undefined;
+    
+    // 버튼을 누른 행의 자식을 평탄화하여 하나의 배열로 만드는 작업을 한다.
+    temp_body = platten(temp_body);
+    temp_result = temp_head.concat(temp_body, temp_tail);
+    _this.data = temp_result;
+
+    // empty rows 를 제거하고 화면을 refresh 한다.
+    remove_empty_rows();
+    _this.refresh();
     _adjust_scroll_v(_this, _this.data.length, true, true);   // scroll bar 조정
+    
     event.preventDefault();
   }
 
@@ -2629,10 +2587,9 @@ FGR.prototype.hide_one_row = function(index, is_hide){
 /**
  * 수직 스크롤의 길이를 조절한다
  * @param row_count : (number || string) 스크롤의 길이 조절 참고용 row 의 숫자
- * @param exist_hidden_row : hidden row 가 존재하는지 여부
  * @returns {FGR}
  */
-function _adjust_scroll_v(_this, row_count, exist_hidden_row){
+function _adjust_scroll_v(_this, row_count){
 
   var scroll = (_this.data.length > _this.cfg.rows_show) ? 'scroll' : 'hidden',
     cnt, scroll_height;
