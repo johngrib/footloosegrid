@@ -38,7 +38,8 @@
 		radio     : function(i,j){return (i === 0) ? 1 : 0;},
 		select    : function(i,j){return (i & 1 === 1) ? 'yes':'no';},
 		gen_label : function(i,j){return 'test' + i + ',' + j;},
-		date      : function(i,j){return $.datepicker.formatDate( "yy-mm-dd", new Date(86400000 * i));}
+		date      : function(i,j){return $.datepicker.formatDate( "yy-mm-dd", new Date(86400000 * i));},
+		gen       : function(i,j){return 1;}
 	};
 	data_generate.free = data_generate.number;
 	data_generate.img  = data_generate.number;
@@ -48,6 +49,7 @@
 	$(document).ready(function(){
 
 		var config1 = {
+			drill_down	 : true,	// 드릴 다운 방식은 상위 계층일수록 1에 가까운 generation 넘버 이용. oracle sql 의 level 방식, essbase 의 generation 방식
 			calc_row          : 'top',
 			cols_show         : 11,  	// 한 페이지에 보여줄 col 의 수 (테이블 전체 width 자동 조정: 왼쪽 col 부터 계산)
 			fixed_header      : 4,   	// 좌측 틀고정 컬럼 수
@@ -133,7 +135,9 @@
               {name:'col12', type:'number', width: 150,  align:'center',  label:'최소값', calc_row: 'min', calc_title:'MIN : '},
               {name:'col13', type:'str',    width: 150, align:'right',   label:'셀병합 테스트'},
               {name:'col14', type:'str',    width: 150, align:'right',   label:'셀병합 테스트'},
-              {name:'col15', type:'img',   width: 100,  align:'center',  label:'기타', resize: true, rule  : img_selector} 
+              {name:'col15', type:'img',   width: 100,  align:'center',  label:'기타', resize: true, rule  : img_selector},
+              {name:'gen',	type:'gen', 	  width: 100,  align:'center',  h_align: 'center', 	label: 'generation'},
+              {name:'label',type:'gen_label', width: 200,  align:'left',  	h_align: 'center', 	label: '레이블', resize: true}
               // end of free type
         ];
 	
@@ -150,8 +154,9 @@
 		window.f = new footloosegrid(id1, config1, column_scheme1);
         f.Create_grid();
 
-        var sample_data 	  = generate_sample_data2(20000, column_scheme1);
-        var sample_data_drill = generate_sample_data_drill(300);
+        //var sample_data 	  = generate_sample_data2(20000, column_scheme1);
+        var sample_data 	  = generate_sample_data_drill(20000, column_scheme1);
+        var sample_data_drill = generate_sample_data_drill(300, column_scheme2);
         var sample_data_json  = window.data = generate_sample_data_json(300);
 
         // 학습용 예제 버튼들 ----------------------------------------------------
@@ -224,8 +229,8 @@
 		}
 
 		// 드릴다운용 샘플 데이터 생성기
-		function generate_sample_data_drill(row_num){
-			var scheme = column_scheme2;
+		function generate_sample_data_drill(row_num, scheme){
+			//var scheme = column_scheme2;
 			var data = [], i;
 			
 			var gen = [0];

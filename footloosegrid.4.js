@@ -470,14 +470,15 @@ function _scheme_initialize(scheme){
      * combined setter : validator + output_css + formatter + setter
      */
     column.setter = (function(column, set){
+      //setter($cell, value, row, col, this);
       var out_css = column.output_css,
         validator = column.output_validator,
         formatter = column.output_formatter,
         init_data = column.init_data,
         setter    = column.setter,
-        setter2   = (formatter) ? function($cell, v){ return setter($cell, formatter(v)); } : setter,
-        setter3   = (out_css)   ? function($cell, v){ return setter2($cell.css(out_css(v)), v); } : setter2,
-        setter4   = (validator) ? function($cell, v){ return setter3($cell, validator(v) ? v : init_data); } : setter3; 
+        setter2   = (formatter) ? function($cell, v, row, col, _this){ return setter($cell, formatter(v), row, col, _this); } : setter,
+        setter3   = (out_css)   ? function($cell, v, row, col, _this){ return setter2($cell.css(out_css(v)), v, row, col, _this); } : setter2,
+        setter4   = (validator) ? function($cell, v, row, col, _this){ return setter3($cell, validator(v) ? v : init_data, row, col, _this); } : setter3; 
       return setter4;
     })(column, set);
 
@@ -677,6 +678,7 @@ function _create_cell_define(_this){
   function _set_interceptor_2_(target, interceptor, secondArg){ 
     return function(e){ interceptor(e, secondArg); target(e); }; }
 
+  //setter($cell, value, row, col, this);
   var cell_def     = {},
     changed      = false,
     std_setter   = function($cell,v){ return $cell.val(v); },
@@ -721,6 +723,27 @@ function _create_cell_define(_this){
       keydown : key_down,
       keyup   : change_val }
   };
+  
+  cell_def.gen2 = {
+    element   : 'input',
+    type      : 'text',
+    style     : _style.input,
+    width_adj : -11,
+    //output_css      : undefined,
+    //output_validator: _.isString,
+    //output_formatter: undefined,
+    getter    : std_getter,
+    setter    : std_setter,
+    init_data : null,
+    //input_validator: _.isString,
+    //input_formatter: undefined,
+    //input_caster   : String,
+    event : {
+      focusin : focus_in,
+      focusout: focus_out,
+      keydown : key_down,
+      keyup   : change_val }
+  }
 
   cell_def.str_label = {  // 헤더에서 사용하는 셀 타입
     element   : 'input',
@@ -964,6 +987,7 @@ function FGR(id, cfg, scheme) {
   this.get_original_cfg    = _make_const_getter(original_cfg);
   this.get_original_scheme = _make_const_getter(original_scheme);
   this.get_gen_col         = _make_const_getter(_.findIndex(scheme, { 'type': 'gen' }));  // gen 넘버 컬럼 인덱스
+  this.get_gen_label_col   = _make_const_getter(_.findIndex(scheme, { 'type': 'gen_label' }));  // gen_label 넘버 컬럼 인덱스
   this.get_IE_version      = _make_const_getter(_check_ie_version());
   this.is_IE               = _make_const_getter(_check_ie_version() > 0);
   this.is_IE               = _make_const_getter(this.get_IE_version() > 0);
@@ -978,10 +1002,11 @@ function FGR(id, cfg, scheme) {
   this.hidden_row_cnt = 0;   // drill down 기능 사용시 scroll bar 의 길이 조절용 자료로 사용된다
   this.drill_btn      = [];  // drill button  객체를 보관할 배열 선언 (화면 상의 button)
   this.gen_label      = [];  // gen_label div 객체를 보관할 배열 선언 (화면 상의 div)
+  this.drill_cell     = [];
 
   // 화면에 데이터를 보여주는 펑션 : 빠른 처리 속도를 위해 일반적인 경우와 drill down 기능이 있는 경우 각기 다른 펑션을 이용한다
-  //this.render_data = (this.cfg.drill_down) ? this.show_drill_data : this.show_data;
   this.render_data = (this.cfg.drill_down) ? _show_drill_data : _show_data;
+  //this.render_data = _show_data;
 
   // cell 관련
   this.scheme        = _scheme_initialize.call(this, scheme);  // column scheme 을 초기화한다
@@ -1063,14 +1088,6 @@ function FGR(id, cfg, scheme) {
   this.scroll_v_inner = $('<div>', {id : '{id}_scroll_v_inner'.rep(word_dic)})
     .width(1).height(0)
     .css('visibility', 'hidden');
-
-
-  /**/
-
-
-
-
-
 
   return this; }
 
@@ -1534,7 +1551,9 @@ function _create_rows(_this, data, callback){
       var column = _this.scheme[k],
         input  = _this.cell[i][k];
       if('gen_label' === column.type){
-        _this.gen_label[i] = $('<span>');
+        //print(_this.cell[i][k]);
+        _this.drill_cell[i] = _this.cell[i][k];
+        _this.cell[i][k] = _this.gen_label[i] = $('<span>');
         _this.drill_btn[i] = _this.buttons.drill_btn_minus.clone(true, true);
         input.empty()
           .append(_this.drill_btn[i], _this.gen_label[i]);
@@ -1949,6 +1968,67 @@ function _create_buttons(_this){
       .dblclick(drill_straight)
       .addClass(_style.drill_btn)
   };
+  
+  function drill(event){
+    
+    var gen_col    = _this.get_gen_col();
+    var row        = _toInt($(this).attr('row'));
+    var parent_row = _this.data[row];
+    var top_gen    = parent_row[gen_col];
+    var flag = {};
+
+    flag[top_gen] = parent_row;
+
+    var hide_mode = !parent_row.children;
+
+    if(hide_mode){
+      for (var i = row + 1; i < _this.data.length; i++) {
+        var this_row = _this.data[i];
+        var gen      = this_row[gen_col];
+        
+        // drill 작업이 끝나면 break;
+        if(gen <= top_gen)
+          break;
+
+        flag[gen] = this_row;
+        
+        if(flag[gen - 1]){
+          if( ! flag[gen - 1].children){
+            flag[gen - 1].children = [];
+          }
+          this_row.hide = true;
+          flag[gen - 1].children.push(this_row);
+        }
+      }
+      
+      var temp_data = [];
+      for (var i = 0; i < _this.data.length; i++) {
+        var this_row = _this.data[i];
+        if( ! _this.data[i].hide)
+          temp_data.push(this_row);
+      }
+      
+      _this.data = temp_data;
+    } else {
+
+      remove_empty_rows();
+
+      var temp_row = parent_row.children.map(function(r){ r.hide = false; return r;});
+      
+      var aa = _this.data.slice(0, row + 1);
+      var bb = _this.data.slice(row + 1);
+      
+      _this.data = aa.concat(temp_row, bb);
+      parent_row.children = undefined;
+    }
+    
+    _this.data.map(function(r, index){ r.index = index; return r; });
+    
+    
+    
+    _adjust_scroll_v(_this, _this.data.length, true);  // scroll bar 조정
+    _this.refresh();
+  }
 
   // private function
   /*
@@ -1994,7 +2074,7 @@ function _create_buttons(_this){
    *
    * generation 넘버가 1000 을 넘지 않는다면 문제는 없을 것이다.
    */
-  function drill(event, row, mode, fix_scroll, count){
+  function drill2(event, row, mode, fix_scroll, count){
     if(row === undefined)
       row = _toInt($(this).attr('row'));
     if(count === undefined)
@@ -2270,6 +2350,10 @@ FGR.prototype.Cell_value = function(row, col, value){
 
   return func($cell, value, row, col, this); };
 
+FGR.prototype.Set_cell_value = function(row, col, value){
+  var $cell  = this.cell[row][col];
+  return this.scheme[col].setter($cell, value, row, col, this); };
+
 /**
  * 화면에 데이터를 보여주는 data render 펑션
  * 이 펑션은 일반적인 방법으로 호출되지 않으며, data_render 변수에 담겨 호출된다
@@ -2295,12 +2379,87 @@ function _show_data(_this, row_cnt) {
 
       for(j = 0; j < len; ++j){
         _this.cell[i][j].attr('row', row);
-        _this.Cell_value(i,j, one_row[j]);
+        //_this.Cell_value(i,j, one_row[j]);
+        _this.Set_cell_value(i,j, one_row[j]);
+      }
+      
+      
+      //if(_this.scheme[j].type === 'gen_label'){
+      
+      
+    }
+  }
+  _this.show_highlight_bar();
+  return _this; };
+  
+function _show_drill_data(_this, row_cnt) {
+  
+  var len = _this.scheme.length,
+    rsh = _this.cfg.rows_show,
+    row, one_row, i, j;
+
+  for(i = 0; i < rsh; ++i){
+    row     = row_cnt + i;
+    one_row = _this.data[row];
+
+    if(one_row){
+
+      for(j = 0; j < len; ++j){
+        // 값 표현
+        _this.cell[i][j].attr('row', row);
+        _this.Set_cell_value(i,j, one_row[j]);
+      }
+      
+      // gen_label 처리
+      var gen_col  = _this.get_gen_col();
+      var label_col= _this.get_gen_label_col();
+      var gen      = one_row[gen_col];
+      var next_row = ((row + 1) < _this.data.length) ? _this.data[row+1] : undefined;
+      var next_gen = next_row ? next_row[gen_col] : -1;
+      var btn      = _this.drill_btn[i];
+      var indent   = _style.drill_indent * gen;
+
+      btn.attr({ row: row, gen: gen });
+      _this.drill_cell[i].css('padding-left', indent);
+      _this.drill_cell[i].width(_this.scheme[label_col].width - indent - _style.input_padding);
+      
+      if (one_row.children) {
+        // 현재 row 가 children 을 숨기고 있다면 + 버튼을 보여준다.
+        btn.show();
+        btn.text('+');
+      } else if(gen < next_gen){
+        // 현재 row 가 부모인 경우 - 버튼을 보여준다.
+        btn.show();
+        btn.text('-');
+      } else {
+        // 현재 row 가 부모가 아닌 경우 버튼을 숨긴다.
+        btn.hide();
+      }
+
+
+      // 배경색 처리
+      if(one_row.bg_color === undefined) 
+        one_row.bg_color = 'transparent';
+      _this.paint_one_row(i, one_row.bg_color);
+
+    } else {
+      
+        var btn      = _this.drill_btn[i];
+        
+        btn.hide();
+        _this.data[row] = _this.create_init_data(1)[0];
+        _this.data[row].empty = true;
+      
+      for(j = 0; j < len; ++j){
+        // 값 표현
+        _this.cell[i][j].attr('row', row);
+        _this.Set_cell_value(i,j, _this.data[row][j]);
       }
     }
   }
   _this.show_highlight_bar();
   return _this; };
+  
 
 /**
  * 드릴 다운 기능이 설정되었을 경우 사용되는 data render 펑션
@@ -2310,7 +2469,7 @@ function _show_data(_this, row_cnt) {
  * @returns {FGR}
  */
 //FGR.prototype.show_drill_data = function(_this, row_cnt){
-function _show_drill_data(_this, row_cnt) {
+function _show_drill_data2(_this, row_cnt) {
 
   var hidden_row_cnt = 0,
     i, j, k, row;
