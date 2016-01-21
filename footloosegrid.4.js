@@ -7,16 +7,13 @@
 /* jshint laxcomma: true*/
 "use strict";
 
-/** 출력 function wrapper */
-var print = (window.console && window.console.log) ? function(msg){ console.log(msg); } : alert;
-
 /** 퍼포먼스 테스트를 위한 time count 펑션. console.time 과 용법은 같다 */
 function time_start (msg){ return (time_start[msg] = new Date().getTime()); }
 
 /** 퍼포먼스 테스트를 위한 time_end 펑션. console. timeEnd 와는 달리 카운트한 시간의 number 를 리턴한다 */
 function time_end(msg){
   var result = new Date().getTime() - time_start[msg];
-  print(msg + " : " + result);
+  console.log(msg + " : " + result);
   return result;}
 
 (function _add_utilities($){
@@ -1551,7 +1548,7 @@ function _create_rows(_this, data, callback){
       var column = _this.scheme[k],
         input  = _this.cell[i][k];
       if('gen_label' === column.type){
-        //print(_this.cell[i][k]);
+        //console.log(_this.cell[i][k]);
         _this.drill_cell[i] = _this.cell[i][k];
         _this.cell[i][k] = _this.gen_label[i] = $('<span>');
         _this.drill_btn[i] = _this.buttons.drill_btn_minus.clone(true, true);
@@ -2492,7 +2489,7 @@ function _show_drill_data2(_this, row_cnt) {
           _this.paint_one_row(i, _style.row_selected);
 
           try { _this.cell[i][_this.col_selected].focus(); }
-          catch(e) { /*print('drill error : ' + i);*/ }
+          catch(e) { /*console.log('drill error : ' + i);*/ }
 
         // 마. 선택된 row 가 아니라면 generation 넘버에 맞춰 색상을 표시해 준다
         } else {
@@ -2995,7 +2992,7 @@ FGR.prototype.Load_data = function(data, callback, filter){
         temp_data[i] = row;
       }
     } else {
-      //print('입력 데이터 형식이 2차원 배열 또는 JSON 배열이 아닙니다.');
+      //console.log('입력 데이터 형식이 2차원 배열 또는 JSON 배열이 아닙니다.');
       return false;
     }
 
