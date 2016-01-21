@@ -18,23 +18,6 @@ function time_end(msg){
 
 (function _add_utilities($){
 
-  /**
-   * 정규식 replace 를 이용한 String concat/replace
-   * @param option : (object)  문자열 치환에 사용할 사전 객체
-   * @param global : (boolean) 같은 문자열을 여러 번 치환할 것인지 여부 (false 이면 제일 앞의 하나만 치환)
-   * @returns {String}
-   * @link https://elijahmanor.github.io/talks/js-smells/#/5/4
-   */
-  String.prototype.rep = function(option, global){
-    var _this= this,
-      ng   = function(p){return '{' + p + '}'; },
-      g    = function(p){return new RegExp(ng(p),'g'); },
-      exp  = (global) ? g : ng,
-      p;
-    for (p in option)
-      _this = _this.replace(exp(p), option[p]);
-    return _this; };
-
   /** Douglas Crockford 의 숫자 검증 펑션 */
   Number.is_number = Number.is_number || function(value){ return typeof value === 'number' && isFinite(value); };
 
@@ -975,7 +958,6 @@ function FGR(id, cfg, scheme) {
   this.cfg  = cfg;
 
   var _this           = this,
-    word_dic        = { id : id },
     original_cfg    = $.extend(true, {}, cfg),  // 중요한 사용자 정의 설정은 closure 를 이용해 immutable object 로 보관해 둔다
     original_scheme = scheme.map(_.clone);
 
@@ -1082,7 +1064,7 @@ function FGR(id, cfg, scheme) {
   this.scroll_mode    = false;
 
   // 수직 스크롤 바 생성
-  this.scroll_v_inner = $('<div>', {id : '{id}_scroll_v_inner'.rep(word_dic)})
+  this.scroll_v_inner = $('<div>', {id : `${id}_scroll_v_inner`})
     .width(1).height(0)
     .css('visibility', 'hidden');
 
@@ -1138,7 +1120,7 @@ FGR.prototype.Create_grid = function() {
   _create_modal_div.call(this);    // 상태 표시용 modal 을 생성한다
 
   // scroll_h 를 생성한다
-  this.scroll_bar_h = $('<div>', {id: '{id}_scroll_bar_h'.rep(word_dic)})
+  this.scroll_bar_h = $('<div>', {id: `${this.get_id()}_scroll_bar_h`})
     .addClass(_style.scroll_h)
     .width(_this.cfg.right_width)
     .height(1)
@@ -1330,9 +1312,9 @@ function _attatch_evt_check(_this){
       col   = _toInt($this.attr('col')),
       div   = (col < _this.cfg.fixed_header) ? _this.div.row_label : _this.div.data_table,
       val   = $this.prop('checked') ? 1 : 0,
-      dict  = { nm: $this.attr('name') };
+      nm    = $this.attr('name');
 
-    div.find('input[name={nm}]'.rep(dict))
+    div.find(`input[name=${nm}]`)
       .prop('checked', $this.prop('checked'));
 
     _this.data.forEach(function(row, i){ row[col] = val; });
@@ -1518,7 +1500,7 @@ function _create_rows(_this, data, callback){
   
   _this.scheme.forEach(function(column, i){
     div = (i < this.cfg.fixed_header) ? 0 : 1;
-    inputs[i] = temp_row[div].find('{ele}[col={i}]'.rep({ele: column.element, i: i}));
+    inputs[i] = temp_row[div].find(`${column.element}[col=${i}]`);
   }, _this);
 
   append_row(0, _this.cfg.rows_show, end, temp_row, inputs, _this);
@@ -1637,7 +1619,7 @@ function _create_header_cell_inner(row, col, cell_scheme, label){
       readonly: ! (type.match(/check|radio/i)),
       'class' : _style.label
     },
-    ret  = $('<{e}>'.rep({e: def.element}), attr)
+    ret  = $(`<${def.element}>`, attr)
       .val(label)
       .css('text-align', cell_scheme.h_align)
       .height(_style.row_height - 1);
@@ -1813,7 +1795,7 @@ function _create_proto_cell(element, mode){
   this.scheme.forEach(function(column, i){
     var adj  = ('select' === column.type) ? 0 : 1;
     cells[i] = _create_cell.call(this, column, element, i, cell_height - adj, mode)
-      .addClass('{id}_col_{i}'.rep({id: _id, i: i}));
+      .addClass(`${_id}_col_${i}`);
   }, this);
   return cells; };
 
@@ -1850,7 +1832,7 @@ function _create_cell(cell_scheme, element, index, height, mode){
 
   // 1. cell attribute 설정
   attr = {
-    id     : '{id}_proto_col_{i}'.rep({id: this.get_id(), i:index}),
+    id     : `${this.get_id()}_proto_col_${index}`,
     name   : cell_scheme.name,
     col    : index,
     'class': (is_calc_row && is_checkbox) ? _style.idiv : set.style,
@@ -1861,7 +1843,7 @@ function _create_cell(cell_scheme, element, index, height, mode){
     attr.maxlength = cell_scheme.size;
 
   // 2. 사용자 입력 cell 생성
-  cell = $('<{e}>'.rep({e: element || set.element}), attr);
+  cell = $(`<${element || set.element}>`, attr);
 
   // 2.1. select 인 경우 option 을 붙여준다.
   append_options = function(){
@@ -1906,7 +1888,7 @@ function _create_col_style(_this, col_index){
     var v       = _this.scheme[i],
       set     = _this.get_cell_define()[v.type],
       _width  = v.width + set.width_adj,
-      css_name= '{id}_col_{i}'.rep({id: _this.get_id(), i: i}),
+      css_name= `${_this.get_id()}_col_${i}`,
       is_hide = _width <= 0,
       attr, exp, key;
 
@@ -2196,11 +2178,11 @@ function _div_setting(){
       'bot_paging' ],
     left_height, div_id, alias;
 
-  div.main = $('#{id}'.rep({id: this.get_id()})).addClass(_style.main_div);
+  div.main = $(`#${this.get_id()}`).addClass(_style.main_div);
 
   for (var i = 0; i < 4; i++) {
     for (var j = 0; j < 3; j++) {
-      div_id    = '_fg_div_{i}{j}'.rep({i:i, j:j});
+      div_id    = `_fg_div_${i}${j}`;
       alias     = div_alias[i*3 + j];
       div[i][j] = div[alias] = create_div(this, div_id);
     }
@@ -2253,7 +2235,7 @@ function _tbl_setting(){
     return $tbl; };
 
   var attr = {
-      id      : '{id}_fg_main_table'.rep({id: this.get_id()}),
+      id      : `${this.get_id()}_fg_main_table`,
        'class': '_fg_main_table',
        border : 0, cellspacing : 0, cellpadding : 0 },
     tbl  = { main : create_pure_table(this, 3, 3, attr).appendTo(this.div.main) },
@@ -2592,7 +2574,7 @@ function _adjust_scroll_v(_this, row_count){
     cnt, scroll_height;
 
   if(row_count === 'visible')
-    cnt = _this.div.data_table.find('.{row}:visible'.rep(_style)).length;
+    cnt = _this.div.data_table.find(`.${_style.row}:visible`).length;
   else if(_.isNumber(row_count))
     cnt = row_count;
 
@@ -2784,7 +2766,7 @@ function _create_calc_row(){
       checked = v.type.match(/check|radio/),
       attr    = {
         readonly : true,
-        id       : '{id}_calc_cell_{i}'.rep({id: this.get_id(), i: i}),
+        id       : `${this.get_id()}_calc_cell_${i}`,
         disabled : checked };
 
     this.calc_cell[i].attr(attr).css('border-left', '1px solid transparent').appendTo(this.div[div]);
@@ -3441,7 +3423,7 @@ function _create_resizer(){
 
     var cfg     = column.resize,
       div     = (i < this.cfg.fixed_header) ? this.div.top_corner : this.div.col_label,
-      header  = div.find('div[col={c}]'.rep({c: i})).last(),
+      header  = div.find(`div[col=${i}]`).last(),
       options = {
         maxHeight: header.height(),
         minHeight: header.height(),
@@ -3591,7 +3573,7 @@ function _create_filter_icon(){
   
   this.scheme.forEach(function(column, i){
     var div    = (i < this.cfg.fixed_header) ? this.div.top_corner : this.div.col_label,
-      header = div.find('div[col={c}]'.rep({c: i})),
+      header = div.find(`div[col=${i}]`),
       attr   = {'class': _style.filter_btn, col: i};
 
     if( ! /&checkbox|&radio/.test(column.label))
@@ -3674,7 +3656,7 @@ function _create_filter_sort_div(_this){
   select_attr = {
     'class': _style.filter_check, type: 'sort',
     func   : 'column',
-    name   : '{id}_filter_sort_column'.rep({id: _this.get_id()})
+    name   : `${_this.get_id()}_filter_sort_column`,
   };
 
   s_select    = _create_filter_column_select(_this, select_attr).appendTo(sort_div);
@@ -3738,13 +3720,13 @@ function _create_filter_sort_div(_this){
 function _create_filter_condition_div(_this){
 
   var _m         = _msg,
-    dict       = {id: _this.get_id()},
+    _id        = _this.get_id(),
     div        = $('<div>',   {'class': _style.filter_sort_div}),
     sort_title = $('<label>', {'class': _style.filter_filter_title}).appendTo(div),
-    f_operator = $('<select>',{ func: 'operator',  name: '{id}_filter_cond_operator'.rep(dict)}),
-    f_column   = _create_filter_column_select(_this, {func: 'column', type: 'cond', name: '{id}_filter_cond_column'.rep(dict)}),
-    f_condition= $('<select>',{ func: 'condition', name: '{id}_filter_cond_condition'.rep(dict)}),
-    f_value    = $('<input>', { func: 'value',     name: '{id}_filter_cond_value'.rep(dict)}),
+    f_operator = $('<select>',{ func: 'operator',  name: `${_id}_filter_cond_operator`}),
+    f_column   = _create_filter_column_select(_this, {func: 'column', type: 'cond', name: `${_id}_filter_cond_column`}),
+    f_condition= $('<select>',{ func: 'condition', name: `${_id}_filter_cond_condition`}),
+    f_value    = $('<input>', { func: 'value',     name: `${_id}_filter_cond_value`}),
     cond_div   = $('<div>',   {'class': _style.filter_cond}),
     plus_btn   = $('<button>',{'class': _style.filter_plus_btn,  func: 'plus' }),
     minus_btn  = $('<button>',{'class': _style.filter_minus_btn, func: 'minus'}),
@@ -3875,7 +3857,7 @@ function _create_filter_div(){
     filter   = [],
     word_map = { id: this.get_id()},
     div_attr = {
-      'id'   : '{id}_filter_div'.rep(word_map),
+      'id'   : `${this.get_id()}_filter_div`,
       'class': _style.filter_div },
     div      = $('<div>', div_attr).appendTo(this.div.main),
     f_column = _create_filter_column_select(this, { func: 'column', type: 'sort' });
@@ -3931,7 +3913,7 @@ FGR.prototype.run_filter = function(_this){
   // ## 필터링된 데이터를 정렬한다
   sort_filtered_data = function(_this){
     var s_div      = _this.div.filter.find('._fg_filter_sort_div'),
-      $columns   = s_div.find('select[name={id}_filter_sort_column]'.rep(word_map)),
+      $columns   = s_div.find(`select[name=${_this.get_id()}_filter_sort_column]`),
       check_asc  = s_div.find('input[order=sort_asc]'),
       check_desc = s_div.find('input[order=sort_desc]'),
       sort_driver= [],  // 정렬시 이용할 자료의 배열
@@ -4029,9 +4011,9 @@ FGR.prototype.run_filter = function(_this){
  * 필터링 옵션을 검사한다
  */
 FGR.prototype.validate_filter_options = function(){
-  var dict = { id: this.get_id() },
-    col  = this.div.filter.find('select[name={id}_filter_cond_column]'.rep(dict)),
-    val  = this.div.filter.find('input[name={id}_filter_cond_value]'.rep(dict)),
+  var _id = this.get_id(),
+    col  = this.div.filter.find(`select[name=${_id}_filter_cond_column]`),
+    val  = this.div.filter.find(`input[name=${_id}_filter_cond_value]`),
     column, type, number_str;
 
   for(var i = 0; i < col.length; ++i){
@@ -4051,12 +4033,12 @@ FGR.prototype.validate_filter_options = function(){
  */
 FGR.prototype.collect_filter_functions = function(){
 
-  var dict      = { id: this.get_id() },
+  var _id     = this.get_id(),
     div       = this.div.filter,
-    op        = div.find('select[name={id}_filter_cond_operator]'.rep(dict)),
-    col       = div.find('select[name={id}_filter_cond_column]'.rep(dict)),
-    cond      = div.find('select[name={id}_filter_cond_condition]'.rep(dict)),
-    val       = div.find('input[name={id}_filter_cond_value]'.rep(dict)),
+    op        = div.find(`select[name=${_id}_filter_cond_operator]`),
+    col       = div.find(`select[name=${_id}_filter_cond_column]`),
+    cond      = div.find(`select[name=${_id}_filter_cond_condition]`),
+    val       = div.find(`input[name=${_id}_filter_cond_value]`),
     functions = [];
 
   for(var i = 0; i < op.length; ++i){
@@ -4156,7 +4138,7 @@ FGR.prototype.data_filter = function(is_matched_data, target_column){
 function _create_search_div(){
 
   var _this    = this,
-    dict     = {id: this.get_id()},
+    _id      = this.get_id(),
     div_attr = {'class': _style.search_div, align: 'right'},
     div      = $('<div>', div_attr).appendTo(this.div.main).draggable({ containment: "parent" }),
     field1   = $('<fieldset>', {align: 'left'}),
@@ -4168,7 +4150,7 @@ function _create_search_div(){
     find_btn = $('<button>', {html: _msg.find_btn   }),
     repl_btn = $('<button>', {html: _msg.replace_btn}),
     close_btn= $('<button>', {html: _msg.close_btn  }),
-    column_select = _create_filter_column_select(this, {id: '{id}_search_column_range'.rep(dict)}),
+    column_select = _create_filter_column_select(this, {id: `${_id}_search_column_range`}),
     b_print, d_print, options;
 
   this.div.search = div;
@@ -4183,10 +4165,10 @@ function _create_search_div(){
   // 방향 fieldset
   d_print = {
     direction : {
-      f_obj   : $('<input>', {type: 'radio', name : '{id}_search_dir'.rep(dict), id: '{id}_search_f_dir'.rep(dict), checked: true}), 
-      f_title : $('<label>', {html: _msg.forward,'for': '{id}_search_f_dir'.rep(dict)}), 
-      b_obj   : $('<input>', {type: 'radio', name : '{id}_search_dir'.rep(dict), id: '{id}_search_b_dir'.rep(dict)}), 
-      b_title : $('<label>', {html: _msg.reward, 'for': '{id}_search_b_dir'.rep(dict)})
+      f_obj   : $('<input>', {type: 'radio', name : `${_id}_search_dir`, id: `${_id}_search_f_dir`, checked: true}), 
+      f_title : $('<label>', {html: _msg.forward,'for': `${_id}_search_f_dir`}), 
+      b_obj   : $('<input>', {type: 'radio', name : `${_id}_search_dir`, id: `${_id}_search_b_dir`}), 
+      b_title : $('<label>', {html: _msg.reward, 'for': `${_id}_search_b_dir`})
     }
   };
 
@@ -4196,17 +4178,17 @@ function _create_search_div(){
   // 옵션 fieldset
   options = {
     case_ignore : {  // 대소문자 무시
-      obj   : $('<input>', {type: 'checkbox',         'id' : '{id}_search_case_ignore'.rep(dict)}),
-      title : $('<label>', {html: _msg.ig_case,   'for': '{id}_search_case_ignore'.rep(dict)}) },
+      obj   : $('<input>', {type: 'checkbox',     'id' : `${_id}_search_case_ignore`}),
+      title : $('<label>', {html: _msg.ig_case,   'for': `${_id}_search_case_ignore`}) },
     whole_word  : {  // 일치하는 단어만 검색
-      obj   : $('<input>', {type: 'checkbox',         'id' : '{id}_search_whole_word'.rep(dict)}),
-      title : $('<label>', {html: _msg.whole_word,'for': '{id}_search_whole_word'.rep(dict)}) },
+      obj   : $('<input>', {type: 'checkbox',     'id' : `${_id}_search_whole_word`}),
+      title : $('<label>', {html: _msg.whole_word,'for': `${_id}_search_whole_word`}) },
     wild_card   : {  // 와일드 카드 사용
-      obj   : $('<input>', {type:'checkbox',          'id' : '{id}_search_wild_card'.rep(dict)}),
-      title : $('<label>', {html: _msg.wild_card, 'for': '{id}_search_wild_card'.rep(dict)}) },
+      obj   : $('<input>', {type:'checkbox',      'id' : `${_id}_search_wild_card`}),
+      title : $('<label>', {html: _msg.wild_card, 'for': `${_id}_search_wild_card`}) },
     reg_exp     : {  // 정규 표현식 사용
-      obj :   $('<input>', {type:'checkbox',          'id' : '{id}_search_regular_expression'.rep(dict)}),
-      title : $('<label>', {html: _msg.reg_exp,   'for': '{id}_search_regular_expression'.rep(dict)}) }
+      obj :   $('<input>', {type:'checkbox',      'id' : `${_id}_search_regular_expression`}),
+      title : $('<label>', {html: _msg.reg_exp,   'for': `${_id}_search_regular_expression`}) }
   };
 
   function create_table(blue_print){
@@ -4429,7 +4411,6 @@ FGR.prototype.modal = function(text, button){
  */
 function _create_modal_div(){
   var _this  = this,
-    dict     = { id: this.get_id() },
     div_attr = {'class': _style.modal_div, align: 'center'},
     div      = $('<div>', div_attr).appendTo(this.div.main),
     title    = $('<div>', {html: '', role: 'title', 'class': _style.modal_content}),
