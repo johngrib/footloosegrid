@@ -12,23 +12,18 @@ function time_start (msg){ return (time_start[msg] = new Date().getTime()); }
 
 /** 퍼포먼스 테스트를 위한 time_end 펑션. console. timeEnd 와는 달리 카운트한 시간의 number 를 리턴한다 */
 function time_end(msg){
-  var result = new Date().getTime() - time_start[msg];
-  console.log(msg + " : " + result);
+  const result = new Date().getTime() - time_start[msg];
+  console.log(`${msg} : ${result}`);
   return result;}
-
-(function _add_utilities($){
-
-  /** Douglas Crockford 의 숫자 검증 펑션 */
-  Number.is_number = Number.is_number || function(value){ return typeof value === 'number' && isFinite(value); };
-
-})(jQuery);  // end of _add_utilities
 
 var footloosegrid = (function _create_footloosegrid_function($){
 
 // support functions
 
   // second argument 를 bind 해주는 curry function
-  function _curry_2_(func, param2) { return function(param1) { return func(param1, param2); }; }
+  function _curry_2_(func, param2) { 
+    return (param1) => func(param1, param2); 
+  }
 
   // getter 생성기
   function _make_const_getter(v) { return function(){ return v; }; }
@@ -36,6 +31,9 @@ var footloosegrid = (function _create_footloosegrid_function($){
   // parseInt wrapped
   var _toInt = _curry_2_(parseInt, 10);
   
+  function _is_number (value) {
+    return typeof value === 'number' && isFinite(value);
+  }
   /**
    * 숫자 형식의 문자열 판별
    * 정수와 실수는 true 를 리턴하며, 과학 표기법은 false 를 리턴한다
@@ -2909,7 +2907,7 @@ FGR.prototype.Add_row = function(number, row_index){
   if(number === undefined)
     number = 1;
 
-  if(Number.is_number(row_index)){
+  if(_is_number(row_index)){
     temp_arr = this.data.slice(0, row_index);
     end_arr  = this.data.slice(row_index);
   }
@@ -3057,7 +3055,7 @@ FGR.prototype.Delete_row = function(row, col){
   // 1. 삭제할 target 수집
   target_arr = (function(){
     if (is_check_type(row))    return _this.Get_checked(col);
-    if (Number.is_number(row)) return [row];
+    if (_is_number(row)) return [row];
     if (Array.isArray(row))    return row;
     if (/^all$/i.test(row))    return 'all';
     else                       return undefined;
