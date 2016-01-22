@@ -26,10 +26,12 @@ var footloosegrid = (function _create_footloosegrid_function($){
   }
 
   // getter 생성기
-  function _make_const_getter(v) { return function(){ return v; }; }
+  function _make_const_getter(v) { 
+    return () => v ;
+  }
 
   // parseInt wrapped
-  var _toInt = _curry_2_(parseInt, 10);
+  const _toInt = _curry_2_(parseInt, 10);
   
   function _is_number (value) {
     return typeof value === 'number' && isFinite(value);
@@ -39,30 +41,27 @@ var footloosegrid = (function _create_footloosegrid_function($){
    * 정수와 실수는 true 를 리턴하며, 과학 표기법은 false 를 리턴한다
    * @returns {Boolean}
    */
-  var _is_number_str = (function(){
-    var reg = /^\s*-?\d+(?:\.\d+)?\s*$/;
-    return function(str){ 
-      return reg.test(str); 
-    };
+  const _is_number_str = (() => {
+    const reg = /^\s*-?\d+(?:\.\d+)?\s*$/;
+    return (str) => reg.test(str);
   })();
 
   /**
    * 숫자에 콤마를 넣어 문자열로 리턴해 준다
    * @returns {String}
    */
-  var _to_comma_format = (function(){
-    var reg = /\B(?=(\d{3})+(?!\d))/g;
-    return function(num){
+  const _to_comma_format = (() => {
+    const reg = /\B(?=(\d{3})+(?!\d))/g;
+    return (num) => {
       if(num == null)
         return num;
 
-      var v = num.toString(),
-        dot = v.indexOf('.'),
-        head, tail;
+      const v   = num.toString();
+      const dot = v.indexOf('.');
 
       if(dot >= 0){
-        tail = v.slice(dot);
-        head = v.slice(0, dot);
+        const tail = v.slice(dot);
+        const head = v.slice(0, dot);
         return head.replace(reg, ",") + tail;
       } else {
         return v.replace(reg, ",");
@@ -78,13 +77,16 @@ var footloosegrid = (function _create_footloosegrid_function($){
     return target_obj; };
   
   /** event interceptor 를 부착해주는 function creator */
-  FGR.prototype.set_interceptor = function set_interceptor(target, interceptor, _this){
-    return (function(){
-      var args = [].slice.call(arguments);
+  FGR.prototype.set_interceptor = function set_interceptor (target, interceptor, _this) {
+    return function(...args){
       interceptor.apply(_this, args);
-      return target.apply(_this, args); }) };
+      return target.apply(_this, args); 
+    };
+  };
       
-  function _sum_func(a, b) { return a + b; };
+  function _sum_func(a, b) { 
+    return a + b; 
+  };
   
 // end of support functions ------------------------------------------------------------
 
