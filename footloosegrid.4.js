@@ -520,34 +520,20 @@ FGR.prototype.event_handler = { };
 /** change_val : 값을 편집할 수 있게 하는 최중요 펑션 */
 FGR.prototype.event_handler.change_val = function(e, evt_process) {
 
-  var loc  = this.get_loc(e.target),
-    column = this.scheme[loc.col],
-    before = this.data[loc.row][loc.col],
+  const loc      = this.get_loc(e.target);
+  const before   = this.data[loc.row][loc.col];
+  const editable = this.is_editable_cell(loc.row, loc.col);
+  const cell     = this.event_handler.cell = { editable, loc, };
 
-    $cell  = $(e.target),
-    formatter = column.input_formatter, // input_formatter 는 화면상의 cell 에 담긴 String 을 데이터화하기 좋은 String 으로 재가공한다.
-    validator = column.input_validator, // input_validator 는 화면상의 cell 에 담긴 String 이 형식에 맞는지 검사한다.
-    slicer    = column.input_slicer,    // input_slicer    는 formatter 가 리턴한 문자열을 지정된 길이로 자른다.
-    caster    = column.input_caster,    // input_caster    는 formatter 가 리턴한 문자열을 해당 타입으로 캐스팅한다. (예: 문자열을 숫자 타입으로 변환)
-    out_css   = column.output_css,      // output_css      는 값을 입력함과 동시에 cell 의 css 를 변경해준다.
-    value, cell, after; 
-  
-  // TODO : _scheme_initialize 에서 data_push 를 구성하도록 변경한다.
-  // TODO : paste 이벤트에서 data_push 를 사용하도록 변경한다.
-
-  value = column.data_push($cell, loc, column.getter($cell));
-
-  cell = this.event_handler.cell = {
-    loc      : loc,
-    editable : this.is_editable_cell(loc.row, loc.col)
-  };
-
-  if (cell.editable)
-    this.data[loc.row][loc.col] = value;
-  else
+  if (editable) {
+    const $cell = $(e.target);
+    const column = this.scheme[loc.col];
+    this.data[loc.row][loc.col] = column.data_push($cell, loc, column.getter($cell));
+  } else {
     return this.refresh();
+  }
 
-  after = this.data[loc.row][loc.col];
+  const after = this.data[loc.row][loc.col];
 
   if(before !== after && evt_process === undefined){
     this.data[loc.row].modified = true;
@@ -681,6 +667,12 @@ function _create_cell_define(_this){
   /*
    * data_push 는 화면 상의 문자열을 가공하여 data 배열에 입력할 값으로 변경해주는 함수이다.
    * 화면 상 셀의 값은 모두 문자이기 때문에 이 변경은 숫자 형식인 경우 특히 중요하다.
+   * 
+   * input_formatter : 화면상의 cell 에 담긴 String 을 데이터화하기 좋은 String 으로 재가공한다.
+   * input_validator : 화면상의 cell 에 담긴 String 이 형식에 맞는지 검사한다.
+   * input_slicer    : formatter 가 리턴한 문자열을 지정된 길이로 자른다.
+   * input_caster    : formatter 가 리턴한 문자열을 해당 타입으로 캐스팅한다. (예: 문자열을 숫자 타입으로 변환)
+   * output_css      : 값을 입력함과 동시에 cell 의 css 를 변경해준다.
    */
 
   // data types *********************************
