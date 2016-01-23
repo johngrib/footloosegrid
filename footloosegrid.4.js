@@ -1183,12 +1183,13 @@ FGR.prototype.Create_grid = function Create_grid() {
  * @returns {FGR}
  */
 function _click_event_processor(e, _this){
-  var loc = _this.get_loc(e.target);
   if(_this.event_flag.click)
+    const loc = _this.get_loc(e.target);
     _this.click_event.forEach(function(v){
       v(e, loc.row, loc.col, _this.data[loc.row][loc.col], _this);
     });
-return _this; };
+  return _this;
+};
 
 /**
  * 셀의 값을 변경할 때 발생하는 이벤트를 처리한다. 각 이벤트 펑션은 this.change_event 에 배열로 지정되어 있다.
@@ -1205,12 +1206,13 @@ return _this; };
  * @returns {FGR}
  */
 function _change_event_processor(e, _this, before, after){
-  var loc = _this.get_loc(e.target);
   if(_this.event_flag.change)
+    const loc = _this.get_loc(e.target);
     _this.change_event.forEach(function(v){
       v(e, loc.row, loc.col, _this.data[loc.row][loc.col], before, _this);
     });
-return _this; };
+  return _this;
+};
 
 /**
  * 셀 포커스 인 이벤트를 처리한다. 각 이벤트 펑션은 this.focusin_event 에 배열로 지정되어 있다.
@@ -1226,12 +1228,13 @@ return _this; };
  * @returns {FGR}
  */
 function _focusin_event_processor(e, _this){
-  var loc = _this.get_loc(e.target);
   if(_this.event_flag.focusin)
+    const loc = _this.get_loc(e.target);
     _this.focusin_event.forEach(function(v){
       v(e, loc.row, loc.col, _this.data[loc.row][loc.col], _this);
     });
-return _this; };
+  return _this;
+};
 
 /**
  * 셀 포커스 아웃 이벤트를 처리한다. this.focusout_event 에 배열로 지정되어 있다.
@@ -1247,12 +1250,13 @@ return _this; };
  * @returns {FGR}
  */
 function _focusout_event_processor(e, _this){
-  var loc = _this.get_loc(e.target);
   if(_this.event_flag.focusout)
+    const loc = _this.get_loc(e.target);
     _this.focusout_event.forEach(function(v){
       v(e, loc.row, loc.col, _this.data[loc.row][loc.col], _this);
   });
-return this; };
+  return this; 
+};
 
 /**
  * header label 의 checkbox 에 전체선택/선택취소 이벤트를 부여한다
