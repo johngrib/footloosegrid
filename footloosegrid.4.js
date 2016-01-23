@@ -1183,11 +1183,12 @@ FGR.prototype.Create_grid = function Create_grid() {
  * @returns {FGR}
  */
 function _click_event_processor(e, _this){
-  if(_this.event_flag.click)
+  if(_this.event_flag.click) {
     const loc = _this.get_loc(e.target);
     _this.click_event.forEach(function(v){
       v(e, loc.row, loc.col, _this.data[loc.row][loc.col], _this);
     });
+  }
   return _this;
 };
 
@@ -1206,11 +1207,12 @@ function _click_event_processor(e, _this){
  * @returns {FGR}
  */
 function _change_event_processor(e, _this, before, after){
-  if(_this.event_flag.change)
+  if(_this.event_flag.change) {
     const loc = _this.get_loc(e.target);
     _this.change_event.forEach(function(v){
       v(e, loc.row, loc.col, _this.data[loc.row][loc.col], before, _this);
     });
+  }
   return _this;
 };
 
@@ -1228,11 +1230,12 @@ function _change_event_processor(e, _this, before, after){
  * @returns {FGR}
  */
 function _focusin_event_processor(e, _this){
-  if(_this.event_flag.focusin)
+  if(_this.event_flag.focusin) {
     const loc = _this.get_loc(e.target);
     _this.focusin_event.forEach(function(v){
       v(e, loc.row, loc.col, _this.data[loc.row][loc.col], _this);
     });
+  }
   return _this;
 };
 
@@ -1250,11 +1253,12 @@ function _focusin_event_processor(e, _this){
  * @returns {FGR}
  */
 function _focusout_event_processor(e, _this){
-  if(_this.event_flag.focusout)
+  if(_this.event_flag.focusout) {
     const loc = _this.get_loc(e.target);
     _this.focusout_event.forEach(function(v){
       v(e, loc.row, loc.col, _this.data[loc.row][loc.col], _this);
-  });
+    });
+  }
   return this; 
 };
 
@@ -1264,36 +1268,37 @@ function _focusout_event_processor(e, _this){
  */
 function _attatch_evt_check(_this){
   
-  var select_all, select_radio;
-
   // '전체 선택 체크박스'를 클릭하면 data 의 해당 컬럼의 모든 값을 '전체 선택 체크박스'와 같은 값으로 맞춘다
-  select_all = function(e) {
-    var $this = $(this),
-      col   = _toInt($this.attr('col')),
-      div   = (col < _this.cfg.fixed_header) ? _this.div.row_label : _this.div.data_table,
-      val   = $this.prop('checked') ? 1 : 0,
-      nm    = $this.attr('name');
+  function select_all (e) {
+    const $this = $(this);
+    const col   = _toInt($this.attr('col'));
+    const div   = (col < _this.cfg.fixed_header) ? _this.div.row_label : _this.div.data_table;
+    const nm    = $this.attr('name');
+    const val   = $this.prop('checked') ? 1 : 0;
 
     div.find(`input[name=${nm}]`)
       .prop('checked', $this.prop('checked'));
 
     _this.data.forEach(function(row, i){ row[col] = val; });
     _this.render_data(_this, _this.current_top_line);
-    return; };
+    return;
+  };
   
   // '전체 선택 라디오' 를 클릭하면 해당 컬럼의 모든 값을 0 으로 맞춘다
-  select_radio = function(e) {
-    var col = _toInt($(this).attr('col'));
+  function select_radio (e) {
+    const col = _toInt($(this).attr('col'));
     _this.data.forEach(function(row){ row[col] = 0; });
     _this.render_data(_this, _this.current_top_line);
-    return; };
+    return;
+  };
 
-  [0, 1].forEach(function(i){
+  [0, 1].forEach(function (i) {
     this[i].find('input[type=checkbox]').click(select_all);
     this[i].find('input[type=radio]'   ).click(select_radio);
   }, _this.div[0]);
 
-  return _this; };
+  return _this;
+};
 
 /**
  * row_label 과 data_table 에 마우스 휠 이벤트를 부여한다
@@ -1301,10 +1306,14 @@ function _attatch_evt_check(_this){
  * @returns {FGR}
  */
 function _attatch_evt_wheel(_this){
-  var is_up_dir = function(e){ return (e.originalEvent.wheelDelta > 0 || e.originalEvent.detail < 0); },
-    wheel_evt = function(e){ _this.scroll_row(is_up_dir(e)? -1:1); return; };
-  _this.div.main.bind('mousewheel DOMMouseScroll', wheel_evt);
-  return _this; };
+  function is_up_dir (e){
+    return (e.originalEvent.wheelDelta > 0 || e.originalEvent.detail < 0);
+  };
+  _this.div.main.bind('mousewheel DOMMouseScroll', function wheel_evt (e){
+      _this.scroll_row(is_up_dir(e)? -1:1); 
+  });
+  return _this;
+};
 
 /**
  * 엑셀 파일 drag & drop 이벤트를 부여한다.
@@ -1315,38 +1324,28 @@ function _attatch_evt_excel(_this){
   function handleDragover(e) {
     e.stopPropagation();
     e.preventDefault();
-    e.dataTransfer.dropEffect = 'copy'; }
+    e.dataTransfer.dropEffect = 'copy';
+  }
 
   // data 교정
   function fixdata(data) {
     var o = "", l = 0, w = 10240;
-    for( ; l < data.byteLength/w ; ++l ) 
+    for( ; l < data.byteLength/w ; ++l ) {
       o += String.fromCharCode.apply(null,new Uint8Array(data.slice(l * w, l * w + w)));
+    }
     o += String.fromCharCode.apply(null, new Uint8Array(data.slice(l * w)));
-    return o; }
+    return o;
+  }
 
   // excel sheet 데이터를 2차원 배열로 가공한다
   function sheet_to_array(sheet, scheme) {
 
-    if(sheet == null || sheet["!ref"] == null) 
-      return [];
+    if(sheet == null || sheet["!ref"] == null) return [];
 
-    var data      = [],
-      range     = safe_decode_range(sheet["!ref"]),
-      cols      = [],
-      start_col = range.s.c,
-      end_col   = range.e.c,
-      len       = scheme.length,
-      Row, C, rr, txt, val, one_row, col_index, date_type_exist, i, typefy;
-
-    for(i = 0; i < len; ++i){
-      if(scheme[i].type === 'date'){
-        date_type_exist = true;
-        break;
-      }
-    }
+    const date_type_exist = _.some(scheme, (col) => ( col.type === 'date' ));
     
     // 문제 있음 : 날짜 형식 체크 과정이 병목.
+    let typefy;
     if(date_type_exist) {
       typefy = function(v, col){ 
         return (col.type === 'date' && typeof v === 'number') ? $.datepicker.formatDate(col.date.dateFormat, new Date((v - 25569) * 86400000)) : v;
@@ -1355,12 +1354,16 @@ function _attatch_evt_excel(_this){
       typefy = function(v){ return v; };
     }
 
-    for(C = start_col; C <= end_col; ++C) 
-      cols[C] = XLSX.utils.encode_col(C);
+    const range     = safe_decode_range(sheet["!ref"]);
+    const start_col = range.s.c;
+    const end_col   = range.e.c;
+    const col_range = _.range(start_col, end_col + 1);
+    const cols      = col_range.map( (c) => XLSX.utils.encode_col(c) );
 
-    for(Row = range.s.r; Row <= range.e.r; ++Row) {
-      one_row = [];
-      rr      = XLSX.utils.encode_row(Row);
+    let C, txt, val, col_index;
+    const data = _.range(range.s.r, range.e.r + 1).map((Row) => {
+      const one_row = [];
+      const rr      = XLSX.utils.encode_row(Row);
 
       for( C = start_col; C <= end_col; ++C ) {
         val = sheet[cols[C] + rr];
@@ -1369,13 +1372,13 @@ function _attatch_evt_excel(_this){
         col_index = C - start_col;
         txt = typefy(txt, scheme[col_index]);
 
-        if(col_index < scheme.length)
-          one_row.push(txt);
+        if(col_index < scheme.length) one_row.push(txt);
       }
-      data.push(one_row);
-    }
+      return one_row;
+    });
+
     return data;
-  }
+  } // end of sheet_to_array
 
   // excel worksheet 의 !ref 값을 범위로 파싱한다.
   function safe_decode_range(range) {
@@ -1408,37 +1411,40 @@ function _attatch_evt_excel(_this){
       idx = 10*idx + cc;
     }
     o.e.r = --idx;
-    return o; }
+    return o; 
+  } // end of safe_decode_range
 
   // drop 이벤트
   function handleDrop(e) {
     e.stopPropagation();
     e.preventDefault();
 
-    var files = e.dataTransfer.files;
-    var f = files[0];
-    var reader = new FileReader();
-    var name = f.name;
+    const files = e.dataTransfer.files;
+    const f     = files[0];
+    const reader= new FileReader();
+    const name  = f.name;
+
     reader.onload = function(e) {
-      var data = e.target.result;
-      var wb   = XLSX.read(btoa(fixdata(data)), {type: 'base64'});
-      var w    = wb.Sheets[wb.SheetNames[0]];
-      var res  = sheet_to_array(w, _this.scheme);
-      window.result = res;
+      const data = e.target.result;
+      const wb   = XLSX.read(btoa(fixdata(data)), {type: 'base64'});
+      const w    = wb.Sheets[wb.SheetNames[0]];
+      const res  = sheet_to_array(w, _this.scheme);
+      //window.result = res;
       _this.clear();
       _this.Load_data(res);
     };
     reader.readAsArrayBuffer(f);
   }
 
-  var drop = _this.div.main.get(0);
+  const drop = _this.div.main.get(0);
   if(drop.addEventListener) {
     drop.addEventListener('dragenter',handleDragover, false);
     drop.addEventListener('dragover', handleDragover, false);
     drop.addEventListener('drop',     handleDrop, false);
   }
 
-  return _this; }
+  return _this;
+}
 
 /**
  * 데이터 row view 생성
