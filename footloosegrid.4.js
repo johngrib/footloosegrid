@@ -594,14 +594,11 @@ FGR.prototype.event_handler.focus_out = function(e) {
 FGR.prototype.event_handler.focus_number = function(e) {
   // number 타입의 cell 에 focus 가 들어간 경우, 콤마 형식의 숫자가 아니라 원본 숫자 데이터를 보여준다.
   //focus_in(e);
+  const $cell = this.event_handler.cell;
   
-  var temp_cell= this.event_handler.cell,
-    loc      = temp_cell.loc,
-    editable = temp_cell.editable,
-    value;
-  
-  if(editable){
-    value = this.data[loc.row][loc.col]; // 편집 가능한 셀이라면 콤마를 제거한 원본 숫자를 보여준다
+  if($cell.editable){
+    const loc   = $cell.loc;
+    const value = this.data[loc.row][loc.col]; // 편집 가능한 셀이라면 콤마를 제거한 원본 숫자를 보여준다
     this.event_handler.temp_number = value;
     $(e.target).val(value); 
   }
@@ -609,17 +606,16 @@ FGR.prototype.event_handler.focus_number = function(e) {
 
 FGR.prototype.event_handler.focus_out_number = function (e){
   // number 타입의 cell 에서 focus 가 해제되면, 콤마 형식의 숫자로 변환하여 보여준다.
-  var loc     = this.get_loc(e.target),
-    v       = this.data[loc.row][loc.col],
-    $this   = $(e.target),
-    is_null = (_.isNull(v) || /^\s*$/.test(v));
+  const loc    = this.get_loc(e.target);
+  const v      = this.data[loc.row][loc.col];
+  const $this  = $(e.target);
+  const is_null= (_.isNull(v) || /^\s*$/.test(v));
 
   if(is_null)
     $this.val(null);
   else
     $this.val(_to_comma_format(v));
 
-  //if(_this.scheme[loc.col].calc_row && focus_number.temp_number !== v)
   if(this.scheme[loc.col].calc_row && this.event_handler.temp_number !== v)
     this.refresh_calc_cell(loc.col);
 
