@@ -402,7 +402,7 @@ function _scheme_initialize(scheme){
     const defn = (_.isString(def)) ? _default_scheme[def] : def;
     return _insert_undefined_values(col, defn);
   }
-
+  
   scheme.forEach(function(col){
     
     const column = _get_column(col);
@@ -416,7 +416,7 @@ function _scheme_initialize(scheme){
 
     // cell 타입별 정의를 참조한다.
     const set = this.get_cell_define()[column.type];  
-
+    
     column.element = set.element;
 
     // 사용자가 설정한 getter 우선
@@ -424,6 +424,8 @@ function _scheme_initialize(scheme){
 
     column.init_data = (column.init_data === undefined) ? set.init_data : column.init_data;
     column.width_adj = set.width_adj;
+    
+    column.focus_in = column.focus_in || set.focus_in;
 
     if(column.type === 'date'){
       column.date = (column.date) ? _insert_undefined_values(column.date, date_cfg) : date_cfg;
@@ -544,37 +546,31 @@ FGR.prototype.event_handler.change_val = function(e, evt_process) {
 /** focus_in 이벤트 핸들러 */
 FGR.prototype.event_handler.focus_in = function(e) {
 
-  var $target  = $(e.target),
-    loc      = this.get_loc(e.target),
-    temp_cell= this.event_handler.cell,
-    editable = this.is_editable_cell(loc.row, loc.col);
+  const $target  = $(e.target);
+  const loc      = this.get_loc(e.target);
+  const temp_cell= this.event_handler.cell;
+  const editable = this.is_editable_cell(loc.row, loc.col);
 
   // 중복 focus in 을 방지한다
   if(temp_cell && temp_cell.loc.row === loc.row && temp_cell.loc.col === loc.col)
     return;
 
-  this.event_handler.cell = {
-    loc      : loc,
-    editable : editable
-  };
+  this.event_handler.cell = { loc, editable, };
 
   this.div.filter.hide();
 
   // 직전에 선택된 cell 의 disabled 속성을 풀어준다
-  if(this.pre_cell)
-    this.pre_cell.removeAttr('disabled');
+  if(this.pre_cell) this.pre_cell.removeAttr('disabled');
 
   // 선택된 컬럼을 기록해 둔다
   this.col_selected = loc.col;
 
   // 편집 금지된 셀이라면 추후 발생할 이벤트를 방지한다
-  if(!editable)
-    e.preventDefault();
+  if(!editable) e.preventDefault();
 
-  // date 타입의 셀이라면 editable 속성을 따져 datepicker 를 생성하거나 제거한다
-  if(this.scheme[loc.col].type === 'date')
-    $target.datepicker(editable ? this.scheme[loc.col].date : 'destroy');
-    //$target.datepicker(editable ? this.cfg.date : 'destroy');
+  const focus_in_after = this.scheme[loc.col].focus_in;
+
+  if(focus_in_after) focus_in_after.bind(this)(e, $target, loc);
 
   // 편집 금지된 셀이라면 disabled 속성을 입력한다.
   $target.attr('disabled', ! editable);
@@ -582,8 +578,9 @@ FGR.prototype.event_handler.focus_in = function(e) {
   // 선택된 셀 객체를 보관한다.
   this.pre_cell = $target;
 
-  if(editable)
-    _focusin_event_processor(e, this);
+  if(editable) _focusin_event_processor(e, this);
+  
+  return e;
 };
 
 /** focus_out 이벤트 핸들러 */
@@ -841,7 +838,12 @@ function _create_cell_define(_this){
       focusout: focus_out,
       keydown : key_down,
       change  : change_val,
-      keyup   : change_val }
+      keyup   : change_val },
+    focus_in : function(e, $cell, loc){ 
+      // date 타입의 셀이라면 editable 속성을 따져 datepicker 를 생성하거나 제거한다
+      const editable = this.is_editable_cell(loc.row, loc.col);
+      $cell.datepicker(editable ? this.scheme[loc.col].date : 'destroy');
+    },
   };
 
   cell_def.gen = {
