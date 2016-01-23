@@ -935,21 +935,17 @@ function FGR(id, cfg, scheme) {
   
   this.cfg  = cfg;
 
-  var _this           = this,
-    original_cfg    = $.extend(true, {}, cfg),  // 중요한 사용자 정의 설정은 closure 를 이용해 immutable object 로 보관해 둔다
-    original_scheme = scheme.map(_.clone);
+  const _this           = this;
 
   // getter methods
   this.get_id              = _make_const_getter(id);
-  this.get_original_cfg    = _make_const_getter(original_cfg);
-  this.get_original_scheme = _make_const_getter(original_scheme);
-  this.get_gen_col         = _make_const_getter(_.findIndex(scheme, { 'type': 'gen' }));  // gen 넘버 컬럼 인덱스
+  this.get_original_cfg    = _make_const_getter($.extend(true, {}, cfg));
+  this.get_original_scheme = _make_const_getter(scheme.map(_.clone));
+  this.get_gen_col         = _make_const_getter(_.findIndex(scheme, { 'type': 'gen' }));        // gen 넘버 컬럼 인덱스
   this.get_gen_label_col   = _make_const_getter(_.findIndex(scheme, { 'type': 'gen_label' }));  // gen_label 넘버 컬럼 인덱스
   this.get_IE_version      = _make_const_getter(_check_ie_version());
   this.is_IE               = _make_const_getter(_check_ie_version() > 0);
   this.is_IE               = _make_const_getter(this.get_IE_version() > 0);
-
-  // TODO : 전역변수 closure 작업중
 
   this.page_index  = 1;     // 현재 페이지 인덱스 (paging 설정시 사용)
   this.cell        = [];    // cell 객체를 보관할 배열 선언 (논리상의 cell 이 아니라 화면 상의 cell)
@@ -963,17 +959,11 @@ function FGR(id, cfg, scheme) {
 
   // 화면에 데이터를 보여주는 펑션 : 빠른 처리 속도를 위해 일반적인 경우와 drill down 기능이 있는 경우 각기 다른 펑션을 이용한다
   this.render_data = (this.cfg.drill_down) ? _show_drill_data : _show_data;
-  //this.render_data = _show_data;
 
   // cell 관련
   this.scheme        = _scheme_initialize.call(this, scheme);  // column scheme 을 초기화한다
   this.header_labels = _get_header_labels_array.call(this);    // header 컬럼 레이블의 문자열 배열
-
-  // header 컬럼 레이블이 입력될 cell 의 배열 (merge 작업 대비)
-  this.header_cells  = (function(cells){
-    this.header_labels.forEach(function(){ cells.push([]); });
-    return cells;
-  }).call(this, []);
+  this.header_cells  = this.header_labels.map((v) => []);      // header 컬럼 레이블이 입력될 cell 의 배열 (merge 작업 대비)
 
   this.cfg = _config_initialize.call(this, cfg);  // config 를 초기화한다
 
@@ -992,9 +982,7 @@ function FGR(id, cfg, scheme) {
   this.sorted        = false;
 
   // prototype row 생성 : grid 생성시 이 prototype row 를 복제하여 각 cell 과 row 를 나열하여 grid 를 만들어낸다.
-  (function(start, fence, end) {
-
-    var _this = this;
+  ((start, fence, end) => {
 
     this.proto          = {};
     this.proto.cell     = _create_proto_cell.call(this);
@@ -1004,11 +992,13 @@ function FGR(id, cfg, scheme) {
     this.proto.row[1]   = _create_proto_row.call(this, fence, end,   this.cfg.right_width);
     this.proto.scroll_v = _create_proto_row.call(this, start, 1, 1).css('visibility', 'hidden').empty();
 
-    var row_click_event = function (e){
+    const _this = this;
+    const row_click_event = function (e){
       try{ _click_event_processor(e, _this); } catch (event){}  // 사용자가 정의한 이벤트를 실행한다 
 
-      var $this = $(this),
-        row   = _toInt($this.attr('row'));  // 화면 상의 row
+      const $this = $(this);
+      const row   = _toInt($this.attr('row'));  // 화면 상의 row
+
       _this.row_selected = _toInt($this.find('[row]').first().attr('row'));  // data 상의 row
 
       // 현재 색칠된 상태인 row 의 색을 본래대로 되돌린다
@@ -1023,11 +1013,13 @@ function FGR(id, cfg, scheme) {
       } else {
         _this.render_data(_this, _this.current_top_line);
       }
-      return; };
+      return;
+    };
 
     this.proto.row.forEach(function(v){ v.mousedown(row_click_event); });  // row click 이벤트 부여
 
-  }).call(this, 0, this.cfg.fixed_header, this.scheme.length);
+  })(0, this.cfg.fixed_header, this.scheme.length);
+
 
   this.current_top_line       =  0;  // 화면상의 최상단 row 의 this.data 인덱스
   this.highlight_row          = -1;  // row 하이라이트 바의 위치 (-1 이면 선택한 row 없음)
@@ -1046,7 +1038,8 @@ function FGR(id, cfg, scheme) {
     .width(1).height(0)
     .css('visibility', 'hidden');
 
-  return this; }
+  return this;
+}
 
 /**
  * 설정을 참고하여 Grid 를 조립한다.
