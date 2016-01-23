@@ -78,7 +78,7 @@ var footloosegrid = (function _create_footloosegrid_function($){
   
   /** event interceptor 를 부착해주는 function creator */
   FGR.prototype.set_interceptor = function set_interceptor (target, interceptor, _this) {
-    return function(...args){
+    return (...args) => {
       interceptor.apply(_this, args);
       return target.apply(_this, args); 
     };
@@ -128,7 +128,9 @@ function _insert_new_styles(_this, id, rule) {
   $('#' + id).remove();
   $("<div>", { id: id, html: '<style>' + rule + '</style>' })
     .appendTo(['#', _this.get_id()].join(''));
-  return _this; };
+  return _this; 
+}
+
 
 // configure ---------------------------------------------------
 /*
@@ -161,7 +163,7 @@ function _insert_new_styles(_this, id, rule) {
 */
 
 // 기본 설정
-var _default_config = {
+const _default_config = {
   wheel_move_row : 1 ,  // 마우스 휠 한 번으로 스크롤할 row 의 수
   drill_down     : false,
   rows_show      : 20,  // 한 페이지에 보여줄 row 의 수 (테이블 전체 height 자동 조정)
@@ -174,11 +176,11 @@ var _default_config = {
   use_filter_panel     : false,
   use_sort_panel       : false,
   search_by_reg_exp    : false,
-  search_replace       : false
+  search_replace       : false,
 };
 
 // datepicker 기본 설정
-var _default_date_config = {
+const _default_date_config = {
   dateFormat  : 'yy-mm-dd',
   changeYear  : true,
   changeMonth : true,
@@ -188,11 +190,11 @@ var _default_date_config = {
   monthNames  :     ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월'],
   monthNamesShort : ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월'],
   constrainInput     : true, // true: 숫자만 입력 가능, false: 다른 키도 입력 가능
-  showMonthAfterYear : true
+  showMonthAfterYear : true,
 };
 
 // scheme type 별 디폴트 값 정의. 설정하지 않은 값들은 아래의 값으로 초기화된다.
-var _default_scheme = {
+const _default_scheme = {
   str       : {name:'', label:'', width: 100, h_align:'center', align:'left',   valign:'middle', edit: true, size: 2000},
   number    : {name:'', label:'', width: 100, h_align:'center', align:'right',  valign:'middle', edit: true, format: '#.############'},
   check     : {name:'', label:'', width: 30,  h_align:'center', align:'center', valign:'middle', edit: true},
@@ -204,7 +206,7 @@ var _default_scheme = {
 };
 
 // css class 스타일 이름 정의
-var _style = {
+const _style = {
   main_div : '_fg_main_div',
   row      : '_fg_row',
   cell     : '_fg_cell',
@@ -256,7 +258,7 @@ var _style = {
 };
 
 // message 설정
-var _msg = {
+const _msg = {
   header_resize : '마우스로 드래그하여 너비를 조정할 수 있습니다',
   filter_run    : '적용',
   filter_close  : '닫기',
@@ -351,15 +353,15 @@ FGR.prototype.sp_char = {
  */
 function _config_initialize(cfg) {
 
-  var col_length = this.scheme.length;
+  const col_length = this.scheme.length;
 
   // 0. 사용자가 정의하지 않은 기본 값을 입력한다.
-  cfg = _insert_undefined_values(cfg, _default_config);
+  const ncfg = _insert_undefined_values(cfg, _default_config);
 
   // 1. fixed_header, cols_show 값을 계산한다.
-  if(cfg.cols_show === undefined){
-    cfg.fixed_header = (col_length > 1) ? 1 : 0;
-    cfg.cols_show    = (col_length > 1) ? col_length - cfg.fixed_header : col_length;
+  if(ncfg.cols_show === undefined){
+    ncfg.fixed_header = (col_length > 1) ? 1 : 0;
+    ncfg.cols_show    = (col_length > 1) ? col_length - ncfg.fixed_header : col_length;
   }
 
   // 2. drill_color 를 설정한다
@@ -369,14 +371,15 @@ function _config_initialize(cfg) {
     만약 인쇄시에도 가독성 있는 배경색을 사용할 필요가 있다면 다음 주소를 참고할 만함.
     --> http://colorbrewer2.org/ - 미국 지질연구소 지도 디자인 담당 교수가 만든 (흑백/컬러) 인쇄를 위한 지도 색깔 그라데이션 생성 서비스.
   */
-  if(cfg.drill_down && cfg.drill_color === undefined)
-    cfg.drill_color = [ '#FFFFFF', '#FBF0F3', '#F7E3EB', '#F3D5E7', '#EFC8E8', '#EABBEB', '#DBAFE7', '#CBA3E3', '#B297DF', '#998CDC' ];
+  if(ncfg.drill_down && ncfg.drill_color === undefined)
+    ncfg.drill_color = [ '#FFFFFF', '#FBF0F3', '#F7E3EB', '#F3D5E7', '#EFC8E8', '#EABBEB', '#DBAFE7', '#CBA3E3', '#B297DF', '#998CDC' ];
 
   // 3. date 설정
-  cfg.date = (cfg.date) ? _insert_undefined_values(cfg.date, _default_date_config)
+  ncfg.date = (ncfg.date) ? _insert_undefined_values(ncfg.date, _default_date_config)
     : _default_date_config;
 
-  return cfg; };
+  return ncfg; 
+};
 
 /**
  * scheme type 별 default 설정을 추가(사용자가 정의한 scheme 의 빈 값을 default 값으로 채운다) 하고, 초기 설정을 계산한다
