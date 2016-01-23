@@ -1045,40 +1045,30 @@ function FGR(id, cfg, scheme) {
  * 설정을 참고하여 Grid 를 조립한다.
  * @returns {FGR}
  */
-FGR.prototype.Create_grid = function() {
+FGR.prototype.Create_grid = function Create_grid() {
 
-  var _this    = this,
-    word_dic = {id: this.get_id() },
-    start    = 0,
-    fence    = this.cfg.fixed_header,
-    end      = this.scheme.length,
-    create   = this.create,
-    scroll_h_func, scroll_v_func, search_evt, objs;
+  const _this = this;
+  const start = 0;
+  const fence = this.cfg.fixed_header;
+  const end   = this.scheme.length;
 
-  scroll_h_func = function(e) { _this.div.right.scrollLeft($(this).scrollLeft()); };
-  scroll_v_func = function(e) {
-    if( ! _this.scroll_mode)
-      return;
-
-    var before_row = _this.current_top_line,
-      v_location = Math.ceil($(this).scrollTop()),     // 현재 스크롤의 위치 (y 좌표)
-      remainder  = v_location % _this.cfg.wheel_move,  // y 좌표를 wheel 단위로 나눈 나머지 (불연속 스크롤 기능 구현)
-      row_cnt    = (v_location - remainder) / _this.cfg.row_height,
-      is_up_dir  = (row_cnt - before_row) < 0,
-      len        = _this.data.length;
-
-    if(_this.hidden_row_cnt > 0 && _this.get_gen_col() >= 0) {
-      for (var i = 0; i < len; i++) {
-        if(_this.data[i].index === row_cnt){
-          row_cnt = i;
-          break; 
-        } } }
-    _this.current_top_line = row_cnt;
-    _this.render_data(_this, row_cnt);
+  function scroll_h_func (e) { 
+    _this.div.right.scrollLeft($(this).scrollLeft());
   };
 
+  function scroll_v_func (e) {
+    if( ! _this.scroll_mode) return;
+
+    const v_location = Math.ceil($(this).scrollTop());     // 현재 스크롤의 위치 (y 좌표)
+    const remainder  = v_location % _this.cfg.wheel_move;  // y 좌표를 wheel 단위로 나눈 나머지 (불연속 스크롤 기능 구현)
+    const row_cnt    = (v_location - remainder) / _this.cfg.row_height;
+
+    _this.current_top_line = row_cnt;
+    _this.render_data(_this, row_cnt);
+  } // end of scroll_v_func
+
   // 1. 조립 전에 부품들을 생성해 둔다
-  _div_size_adjust.call(this);          // div 사이즈를 조정한다
+  _div_size_adjust.call(this);                 // div 사이즈를 조정한다
   _create_header.call(this, 0, start, fence);  // 좌측 헤더를 완성한다
   _create_header.call(this, 1, fence, end);    // 우측 헤더를 완성한다
   _create_merge_v_header.call(this);           // 상단 레이블 텍스트를 merge 한다.
@@ -1101,16 +1091,15 @@ FGR.prototype.Create_grid = function() {
     this.div.scroll_h.closest('tr').hide();  // 컬럼 수에 따라 수평 스크롤 바를 숨기거나 보여준다
 
   // 1. 조립 설계도
-  objs = (function(_this){
-    var left        = _this.cfg.left_width,
-      right       = _this.cfg.right_width,
-      right_show  = _this.cfg.right_width_show,
-      calc_height = (_this.cfg.calc_row) ? _this.cfg.row_height : 0,
-      data_height = _this.cfg.rows_show * _this.cfg.row_height,
-      scr_width   = _this.cfg.scroll_bar_width,
-      blue_print;
+  const objs = (() => {
+    const left        = this.cfg.left_width;
+    const right       = this.cfg.right_width;
+    const right_show  = this.cfg.right_width_show;
+    const calc_height = (this.cfg.calc_row) ? this.cfg.row_height : 0;
+    const data_height = this.cfg.rows_show * this.cfg.row_height;
+    const scr_width   = this.cfg.scroll_bar_width;
 
-    blue_print = [
+    const blue_print = [
        { div_name: 'left',      width : left + 2       },
        { div_name: 'right',     width : right_show + 1 },
        { div_name: 'top_corner'                        },
@@ -1120,24 +1109,24 @@ FGR.prototype.Create_grid = function() {
        { div_name: 'row_label', height: data_height                  },
        { div_name: 'data_table',height: data_height,   width : right },
        { div_name: 'scroll_h',  height: scr_width + 1, width : right_show + 2, scroll : scroll_h_func },
-       { div_name: 'scroll_v',  height: _this.cfg.scroll_v_height,
+       { div_name: 'scroll_v',  height: this.cfg.scroll_v_height,
          width    : scr_width + 1,
-         mouseover: function(){_this.scroll_mode = true; },
-         mouseout : function(){_this.scroll_mode = false; },
+         mouseover() { this.scroll_mode = true; },
+         mouseout () { this.scroll_mode = false; },
          scroll   : scroll_v_func,
-         child    : _this.scroll_v_inner }
+         child    : this.scroll_v_inner }
     ];
 
-    if(_this.cfg.calc_row === 'bottom'){
+    if(this.cfg.calc_row === 'bottom'){
       blue_print.push({ div_name: 'bot_empty', height: 0 });
-      blue_print.push({ div_name: 'bot_right', height: 0, width: _this.cfg.right_width });
+      blue_print.push({ div_name: 'bot_right', height: 0, width: this.cfg.right_width });
     }
     return blue_print;
-  })(this);
+  })();
 
   // 2. 조립 실행
   objs.forEach(function(v){
-    var div = _this.div[v.div_name];
+    const div = _this.div[v.div_name];
     if(v.width    ) div.width( v.width );
     if(v.height   ) div.height(v.height);
     if(v.scroll   ) div.scroll(v.scroll);
@@ -1152,16 +1141,12 @@ FGR.prototype.Create_grid = function() {
   _attatch_evt_paste(this);  // ctrl+v 붙여넣기 이벤트
   _attatch_evt_excel(this);  // excel 파일 드래그 & 드랍 이벤트
   
-  search_evt = function(e){
-    var f_key = e.keyCode === 70,
-      ctrl  = e.ctrlKey;
-    if(ctrl && f_key){
-      _this.div.search.show()
-        .find('input:first').focus();
+  this.div.main.keydown( function search_evt (e) {
+    if(e.ctrlKey && e.keyCode === 70){
+      _this.div.search.show().find('input:first').focus();
       e.preventDefault();
     }
-  };
-  this.div.main.keydown(search_evt);
+  });
 
   this.click_event   = [];
   this.change_event  = [];
