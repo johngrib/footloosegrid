@@ -916,13 +916,13 @@ function _create_cell_define(_this){
  * @returns
  */
 FGR.prototype.apply_data_size = function(data, col){
-  var _this  = this,
-    format = _this.scheme[col].format_regexp;
+  const format = this.scheme[col].format_regexp;
 
   if(format)
-    return (data).toString().replace(format, '$1');
+    return String(data).replace(format, '$1');
   else 
-    return data; };
+    return data; 
+};
 
 /**
  * Constructor
