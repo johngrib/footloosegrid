@@ -636,26 +636,27 @@ FGR.prototype.event_handler.focus_out_number = function (e){
 function _create_cell_define(_this){
   
   function _set_interceptor_2_(target, interceptor, secondArg){ 
-    return function(e){ interceptor(e, secondArg); target(e); }; }
+    return function(e){ interceptor(e, secondArg); target(e); }; 
+  }
 
   //setter($cell, value, row, col, this);
-  var cell_def     = {},
-    changed      = false,
-    std_setter   = function($cell,v){ return $cell.val(v); },
-    std_getter   = function($cell  ){ return $cell.val( ); },
-    text_setter  = function($cell,v){ return $cell.text(v);},
-    text_getter  = function($cell  ){ return $cell.text( );},
-    check_setter = function($cell,v){ return $cell.prop('checked', _.isNumber(v) && v > 0); },
-    check_getter = function($cell  ){ return $cell.prop('checked') ? 1 : 0; },
-    key_down     = function(e) { _move_focus(e, _this); },  // key_down 시 cursor focused 를 이동한다.
-    change_val   = _this.event_handler.change_val.bind(_this),  // 값을 편집할 수 있게 하는 최중요 펑션
-    focus_in     = _this.event_handler.focus_in.bind(_this),
-    focus_out    = _this.event_handler.focus_out.bind(_this),
-    focus_num    = _this.event_handler.focus_number.bind(_this),
-    focus_out_num= _this.event_handler.focus_out_number.bind(_this);
+  const cell_def     = {};
+  const std_setter   = ($cell,v) => $cell.val(v);
+  const std_getter   = ($cell  ) => $cell.val( );
+  const text_setter  = ($cell,v) => $cell.text(v);
+  const text_getter  = ($cell  ) => $cell.text( );
+  const check_setter = ($cell,v) => $cell.prop('checked', _.isNumber(v) && v > 0);
+  const check_getter = ($cell  ) => { return $cell.prop('checked') ? 1 : 0; };
+  const key_down     = function(e) { _move_focus(e, _this); };      // key_down 시 cursor focused 를 이동한다.
+  const change_val   = _this.event_handler.change_val.bind(_this);  // 값을 편집할 수 있게 하는 최중요 펑션
+  const focus_in     = _this.event_handler.focus_in.bind(_this);
+  const focus_out_num= _this.event_handler.focus_out_number.bind(_this);
 
-  focus_out = _set_interceptor_2_(focus_out, change_val, false);  // focus_out 실행전에는 change_val 이 먼저 실행된다
-  focus_num = _set_interceptor_2_(focus_num, focus_in, undefined);  // focus_num 실행전에는 focus_in 이 먼저 실행된다
+  const tmp_focus_out= _this.event_handler.focus_out.bind(_this);
+  const tmp_focus_num= _this.event_handler.focus_number.bind(_this);
+
+  const focus_out = _set_interceptor_2_(tmp_focus_out, change_val, false);  // focus_out 실행전에는 change_val 이 먼저 실행된다
+  const focus_num = _set_interceptor_2_(tmp_focus_num, focus_in, undefined);  // focus_num 실행전에는 focus_in 이 먼저 실행된다
   
   /*
    * data_push 는 화면 상의 문자열을 가공하여 data 배열에 입력할 값으로 변경해주는 함수이다.
@@ -687,29 +688,9 @@ function _create_cell_define(_this){
       focusin : focus_in,
       focusout: focus_out,
       keydown : key_down,
-      keyup   : change_val }
+      keyup   : change_val,
+    },
   };
-  
-  cell_def.gen2 = {
-    element   : 'input',
-    type      : 'text',
-    style     : _style.input,
-    width_adj : -11,
-    //output_css      : undefined,
-    //output_validator: _.isString,
-    //output_formatter: undefined,
-    getter    : std_getter,
-    setter    : std_setter,
-    init_data : null,
-    //input_validator: _.isString,
-    //input_formatter: undefined,
-    //input_caster   : String,
-    event : {
-      focusin : focus_in,
-      focusout: focus_out,
-      keydown : key_down,
-      keyup   : change_val }
-  }
 
   cell_def.str_label = {  // 헤더에서 사용하는 셀 타입
     element   : 'input',
@@ -729,7 +710,8 @@ function _create_cell_define(_this){
       keydown : key_down,
       keyup   : change_val,
       focusin : focus_in,
-      focusout: focus_out }
+      focusout: focus_out,
+    },
   };
 
   cell_def.number = {
@@ -737,20 +719,21 @@ function _create_cell_define(_this){
     type      : 'text',
     style     : _style.input,
     width_adj : -11,
-    output_css      : function(v){ return { color: (v < 0) ? 'red' : 'black' }; }, // return css style by number
+    output_css      : (v) => { return { color: (v < 0) ? 'red' : 'black' }; }, // return css style by number
     output_validator: _.isNumber,
     output_formatter: _to_comma_format, // return number comma format applied
     getter    : std_getter,
     setter    : std_setter,
     init_data : null,
     input_validator: _is_number_str,
-    input_formatter: function(v) { return v.replace(/,/g, ''); },
+    input_formatter: (v) => v.replace(/,/g, ''),
     input_caster   : Number,
     event : {
       keydown : key_down,
       keyup   : change_val,
       focusin : focus_num,
-      focusout: focus_out_num }
+      focusout: focus_out_num,
+    },
   };
 
   cell_def.check = {
@@ -767,7 +750,7 @@ function _create_cell_define(_this){
     input_validator: _.isNumber,
     //input_formatter: undefined,
     //input_caster   : undefined,
-    event : { change : change_val }
+    event : { change : change_val, },
   };
 
   cell_def.radio = {
@@ -787,12 +770,13 @@ function _create_cell_define(_this){
     after_input: function($cell, loc, value){
       // 필터링 된 상태에서 라디오 버튼을클릭한다면, pre_filter_data 의 라디오 버튼 값을 청소해 주어야 한다
       // 필터를 풀었을 때, 라디오 버튼 값이 1 개를 초과할 일을 방지하기 위함.
-      var data = (_this.pre_filter_data) ? _this.pre_filter_data : _this.data;
+      const data = (_this.pre_filter_data) ? _this.pre_filter_data : _this.data;
       data.forEach(function(v){ v[loc.col] = 0; });
     },
     event : {
       focusin : focus_in,
-      change  : change_val }
+      change  : change_val,
+    },
   };
 
   cell_def.select = {
@@ -812,7 +796,8 @@ function _create_cell_define(_this){
     //input_caster   : undefined,
     event : {
       focusin : focus_in,
-      change  : change_val }
+      change  : change_val,
+    },
   };
 
   cell_def.date = {
@@ -855,7 +840,7 @@ function _create_cell_define(_this){
     //input_validator: undefined,
     //input_formatter: undefined,
     //input_caster   : undefined,
-    init_data : ''
+    init_data : '',
   };
 
   cell_def.gen_label = {
@@ -871,7 +856,7 @@ function _create_cell_define(_this){
     //input_validator: undefined,
     //input_formatter: undefined,
     //input_caster   : undefined,
-    init_data : ''
+    init_data : '',
   };
 
   cell_def.img = {
@@ -882,17 +867,17 @@ function _create_cell_define(_this){
     //output_css      : undefined,
     //output_validator: undefined,
     //output_formatter: undefined,
-    rule      : function(v){ return ''; },
+    rule      : (v) => '',
     getter    : text_getter,
     setter    : function($cell, v, row, col){ 
-      var image = _this.scheme[col].rule(v);
+      const image = _this.scheme[col].rule(v);
       $cell.text((v === null) ? '' : v);
       $cell.css('background-image', image);
     },
     //input_validator: undefined,
     //input_formatter: undefined,
     //input_caster   : undefined,
-    init_data : null
+    init_data : null,
   };
 
   cell_def.free = {
@@ -906,7 +891,8 @@ function _create_cell_define(_this){
       focusout: focus_out,
       keydown : key_down,
       change  : change_val,
-      keyup   : change_val }
+      keyup   : change_val,
+    }
   };
 
   for(var key in _this.custom_cell_define){
@@ -920,7 +906,8 @@ function _create_cell_define(_this){
         keyup   : change_val }
     }
   }
-  return cell_def; };
+  return cell_def; 
+};
 
 /**
  * 개별 데이터에 size(str) / format(number) 옵션을 적용한다
