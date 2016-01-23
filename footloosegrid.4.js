@@ -2576,7 +2576,6 @@ FGR.prototype.paint_rows = function(_this){
  * 이 펑션은 키 입력을 받아 움직이도록 하고, 다른 용도로는 가급적이면 호출하지 않도록 한다
  * @return {Boolean} 네비게이션 키 입력을 받았다면 true 를 리턴하고, 그 외의 경우에는 false 를 리턴한다
  */
-//FGR.prototype.move_focus = function (e, _this){
 function _move_focus(e, _this) {
 
   // 고의로 움직임에 딜레이를 준다. 키를 계속 누르고 있을 경우, 
@@ -2589,32 +2588,26 @@ function _move_focus(e, _this) {
     setTimeout(function(){ _this.move_delay = false;}, _this.scroll_delay_ms);
   }
 
-  if(e.keyCode === 13)
-    e.preventDefault();
+  if(e.keyCode === 13) e.preventDefault();
 
   // 13: Enter, 33: pgup, 34: pgdn, 38: ↑, 40: ↓
-  var keys  = {
+  const keys  = {
     13:  1,
     33: -_this.cfg.rows_show,
     34:  _this.cfg.rows_show,
     38: -1,
-    40:  1 
+    40:  1, 
   }; 
 
-  if( ! keys.hasOwnProperty(e.keyCode))    // keys 에 정의된 키 코드가 아니라면 return
-    return false;
+  // keys 에 정의된 키 코드가 아니라면 return
+  if( ! keys.hasOwnProperty(e.keyCode)) return false;
 
-  var loc     = _this.get_loc(e.target),
-    row     = loc.row, col = loc.col,
-    row_cnt = keys[e.keyCode],
-    top     = _this.div.scroll_v.scrollTop(),
-    this_row, check, next_row, row_num, row_int;
-
-  // drill down 모드일 때에는 current line 계산을 하는 것이 아니라 focus 가 있는 row 의 인덱싱을 인식하도록 한다
-  this_row = (_this.get_gen_col() >= 0) ? row - _this.current_top_line
-    : _toInt($(e.target).closest('.' + _style.row).attr('row'));
-
-  check    = {'-1': this_row === 0, 1: this_row >= _this.rows.length - 1};
+  const loc = _this.get_loc(e.target);
+  const row = loc.row;
+  const col = loc.col;
+  const row_cnt = keys[e.keyCode];  // 입력한 키에 따라 스크롤 할 row 의 수를 가져온다.
+  const this_row = row - _this.current_top_line;
+  const check    = {'-1': this_row === 0, 1: this_row >= _this.rows.length - 1};
 
   // 1. ↑, ↓ 입력이 들어온 경우
   if(check.hasOwnProperty(row_cnt)){
@@ -2625,31 +2618,26 @@ function _move_focus(e, _this) {
       if(_this.row_selected < 0)
         _this.row_selected = 0;
 
-      if(_this.get_gen_col() >= 0)  // drill 옵션이 있는 경우
-        _this.highlight_refresh = false;
-
       _this.scroll_row(row_cnt);
 
     // B. 현재 커서 위치가 최상단, 최하단이 아니라면
     } else {
-      next_row = _this.cell[this_row + row_cnt];
+      const next_row = _this.cell[this_row + row_cnt];
 
-      if(_this.get_gen_col() >= 0){  // drill 옵션이 있는 경우
-        row_num  = $(e.target).closest('.' + _style.row).attr('row');
-        row_int  = _toInt(row_num);
-        next_row = _this.cell[row_int + row_cnt];
-      }
       if(next_row)
         next_row[col].mousedown().focus();
     }
 
   // 2. pgup, pgdn 입력이 들어온 경우
   } else {
+    const top = _this.div.scroll_v.scrollTop();
+
     _this.row_selected = row + row_cnt;
     _this.div.scroll_v.scrollTop(top + _this.cfg.row_height * row_cnt);
     _this.scroll_row(row_cnt);
   }
-  return true; };
+  return true;
+};
 
 /**
  * paste event (control + v 키 이벤트)
