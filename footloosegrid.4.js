@@ -26,7 +26,7 @@ var footloosegrid = (function _create_footloosegrid_function($){
   }
 
   // getter 생성기
-  function _make_const_getter(v) { 
+  function _make_const_getter(v) {
     return () => v ;
   }
 
@@ -389,22 +389,23 @@ function _config_initialize(cfg) {
  */
 function _scheme_initialize(scheme){
 
-  this.get_cell_define     = _make_const_getter(_create_cell_define(this));  // cell 의 type 에 따른 특징과 기능을 보관한다
+  this.get_cell_define = _make_const_getter(_create_cell_define(this));  // cell 의 type 에 따른 특징과 기능을 보관한다
 
-  var _this = this;
-  var date_cfg = (this.cfg.date) ? _insert_undefined_values(this.cfg.date, _default_date_config)
-      : _default_date_config,
-    def, set, point_length;
+  const _this = this;
+  const date_cfg = (this.cfg.date) ? _insert_undefined_values(this.cfg.date, _default_date_config)
+      : _default_date_config;
 
-  scheme.map(function(column){
-    // 사용자가 정의하지 않은 컬럼 기본 설정을 복사한다.
-    if(column.type){
-      def = _default_scheme[column.type];
-      if(_.isString(def))
-        def = _default_scheme[def];
+  // 사용자가 정의하지 않은 컬럼 기본 설정을 복사한다.
+  function _get_column (col) {
+    if(! col.type) throw new Error('need column type.');
+    const def  = _default_scheme[col.type];
+    const defn = (_.isString(def)) ? _default_scheme[def] : def;
+    return _insert_undefined_values(col, defn);
+  }
 
-      column = _insert_undefined_values(column, def);
-    }
+  scheme.forEach(function(col){
+    
+    const column = _get_column(col);
 
     // 컬럼 초기 width 를 설정한다
     column.init_width = column.width;  
@@ -414,7 +415,7 @@ function _scheme_initialize(scheme){
       column.bg_color = _style.readonly;
 
     // cell 타입별 정의를 참조한다.
-    set = this.get_cell_define()[column.type];  
+    const set = this.get_cell_define()[column.type];  
 
     column.element = set.element;
 
@@ -429,18 +430,18 @@ function _scheme_initialize(scheme){
     }
 
     if(! column.format_regexp && column.size && _.isNumber(column.size)){
-      column.format_regexp = new RegExp('(^.{0,' + _toInt(column.size) + '}).*$');
+      column.format_regexp = new RegExp(`(^.{0, ${_toInt(column.size)} }).*$`);
     } else if(column.format){
-      point_length = column.format.replace(/^(#+\.)/, '').length;
-      column.format_regexp = new RegExp('(^[^\\.]+(?:\\..{1,' + point_length + '})).*$');
+      const point_length = column.format.replace(/^(#+\.)/, '').length;
+      column.format_regexp = new RegExp(`(^[^\\.]+(?:\\.\\d{1,${point_length}})?).*$`);
     }
     
     if(column.format_regexp){
-      column.input_slicer  = (function(format){
-        return function(v){ return String(v).replace(format, '$1'); };
+      column.input_slicer  = ((format) => {
+        return (v) => String(v).replace(format, '$1'); 
       })(column.format_regexp);
     }
-    
+
     // output functions
     column.setter           = column.setter           || set.setter;
     column.output_validator = column.output_validator || set.output_validator;
@@ -471,45 +472,42 @@ function _scheme_initialize(scheme){
     column.input_formatter = column.input_formatter || set.input_formatter;
     column.input_caster    = column.input_caster    || set.input_caster;
 
-  column.data_push = (function data_push(){
+    column.data_push = (function data_push(){
 
-    var getter  = column.getter,
-      formatter = column.input_formatter,
-      validator = column.input_validator,
-      slicer    = column.input_slicer,
-      caster    = column.input_caster,
-      out_css   = column.output_css,
-      after_input = column.after_input;
-  
-    return function($cell, loc, value){
-      var v_string = (formatter) ? formatter(value) : value;
-  
-      if(! validator) {
-        // validator 가 없다면 입력한 값을 그냥 사용한다.
-        value = v_string;   
-      } else if(validator(v_string)){
-        // validator 가 있다면 검사를 통과해야만 값을 입력해 준다.
-        v_string = slicer ? slicer(v_string) : v_string;
-        value = caster ? caster(v_string) : v_string;
-      } else {
-        // validator 검사를 통과하지 못했다면 이전 값을 유지한다.
-        value = _this.data[loc.row][loc.col];
-      }
-
-      if($cell && out_css)
-        $cell.css(out_css(value));
+      const getter    = column.getter;
+      const validator = column.input_validator;
+      const formatter = column.input_formatter || (v => v);
+      const slicer    = column.input_slicer    || (v => v);
+      const caster    = column.input_caster    || (v => v);
+      const out_css   = column.output_css;
+      const after_input = column.after_input;
       
-      if(after_input)
-        after_input($cell, loc, value);
+      function get_result (v_string, validator, loc) {
+        if(! validator)
+          return v_string;
+        else if(validator(v_string))
+          return caster( slicer(v_string));
+        else
+          return _this.data[loc.row][loc.col];
+      }
+    
+      return function($cell, loc, value){
 
-      return value;
-    };
-  })();
+        const result = get_result(formatter(value), validator, loc);
+
+        if($cell && out_css) $cell.css(out_css(result));
+        
+        if(after_input) after_input($cell, loc, result);
+
+        return result;
+      };
+    })(); // end of data_push
 
     return column;
   }, this);
 
-  return scheme; };
+  return scheme;
+};
 
 /** 사용자 정의 데이터 타입 */
 FGR.prototype.custom_cell_define = {};
