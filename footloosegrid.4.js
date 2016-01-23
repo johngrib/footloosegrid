@@ -455,14 +455,14 @@ function _scheme_initialize(scheme){
      */
     column.setter = (function(column, set){
       //setter($cell, value, row, col, this);
-      var out_css = column.output_css,
-        validator = column.output_validator,
-        formatter = column.output_formatter,
-        init_data = column.init_data,
-        setter    = column.setter,
-        setter2   = (formatter) ? function($cell, v, row, col, _this){ return setter($cell, formatter(v), row, col, _this); } : setter,
-        setter3   = (out_css)   ? function($cell, v, row, col, _this){ return setter2($cell.css(out_css(v)), v, row, col, _this); } : setter2,
-        setter4   = (validator) ? function($cell, v, row, col, _this){ return setter3($cell, validator(v) ? v : init_data, row, col, _this); } : setter3; 
+      const out_css   = column.output_css;
+      const validator = column.output_validator;
+      const formatter = column.output_formatter;
+      const init_data = column.init_data;
+      const setter    = column.setter;
+      const setter2   = (formatter) ? function($cell, v, row, col, _this){ return setter($cell, formatter(v), row, col, _this); } : setter;
+      const setter3   = (out_css)   ? function($cell, v, row, col, _this){ return setter2($cell.css(out_css(v)), v, row, col, _this); } : setter2;
+      const setter4   = (validator) ? function($cell, v, row, col, _this){ return setter3($cell, validator(v) ? v : init_data, row, col, _this); } : setter3; 
       return setter4;
     })(column, set);
 
