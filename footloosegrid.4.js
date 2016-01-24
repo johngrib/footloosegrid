@@ -2066,7 +2066,8 @@ function _div_size_adjust(){
   this.div[0][0]
     .width(this.cfg.left_width)
     .height(this.header_labels.length * this.cfg.row_height);
-  return this; };
+  return this;
+};
 
 /**
  * 사이즈 설정 초기화
@@ -2074,16 +2075,20 @@ function _div_size_adjust(){
  * @returns {object}
  */
 function _size_setting() {
-  var cfg      = this.cfg,
-    scheme     = this.scheme,
-    _add_func  = function(a, b) { return a + b; },
-    start      = 0,
-    fence      = cfg.fixed_header,
-    end        = scheme.length,
-    border     = cfg.border_size = 0,
-    is_cols    = _.isNumber(cfg.cols_show) && cfg.cols_show > 0,
-    is_rows    = _.isNumber(cfg.rows_show) && cfg.rows_show > 0,
-    show_width = _.chain(scheme).slice(fence, fence + cfg.cols_show).pluck('width').reduce(_add_func, 0);
+
+  function _add_func (a, b) {
+    return a + b;
+  }
+
+  const cfg        = this.cfg;
+  const scheme     = this.scheme;
+  const start      = 0;
+  const fence      = cfg.fixed_header;
+  const end        = scheme.length;
+  const border     = cfg.border_size = 0;
+  const is_cols    = _.isNumber(cfg.cols_show) && cfg.cols_show > 0;
+  const is_rows    = _.isNumber(cfg.rows_show) && cfg.rows_show > 0;
+  const show_width = _.chain(scheme).slice(fence, fence + cfg.cols_show).pluck('width').reduce(_add_func, 0);
 
   cfg.header_height    = this.header_labels.length * cfg.row_height + 1;
   
@@ -2104,7 +2109,8 @@ function _size_setting() {
   cfg.wheel_move = cfg.row_height * cfg.wheel_move_row;  // 마우스 휠을 한 번 굴릴 때의 이동 거리
 
   cfg.scroll_bar_width = this.get_scroll_bar_width();
-  return cfg; };
+  return cfg;
+};
 
 /**
  * DIV 객체 초기화
@@ -2113,33 +2119,37 @@ function _size_setting() {
  */
 function _div_setting(){
 
-  var create_div = function(_this, id){ return $('<div>', {id: _this.get_id() + id, 'class': id});},
-    div        = { 0: [], 1: [], 2: [], 3: [], 4: []},
-    div_alias  = [  // div 알리아스 정의
-      'top_corner', 'col_label',  'top_empty',
-      'calc_left',  'calc_right', 'calc_empty',
-      'row_label',  'data_table', 'scroll_v',
-      'bot_empty',  'scroll_h',   'bot_corner',
-      'bot_paging' ],
-    left_height, div_id, alias;
+  function create_div (_this, id) {
+    return $('<div>', {id: _this.get_id() + id, 'class': id});
+  }
 
-  div.main = $(`#${this.get_id()}`).addClass(_style.main_div);
+  const div = { 
+      0: [], 1: [], 2: [], 3: [], 4: [],
+      main : $(`#${this.get_id()}`).addClass(_style.main_div),
+  };
+  const div_alias  = [  // div 알리아스 정의
+      ['top_corner', 'col_label',  'top_empty'],
+      ['calc_left',  'calc_right', 'calc_empty'],
+      ['row_label',  'data_table', 'scroll_v'],
+      ['bot_empty',  'scroll_h',   'bot_corner'],
+      ['bot_paging'] ];
 
   for (var i = 0; i < 4; i++) {
     for (var j = 0; j < 3; j++) {
-      div_id    = `_fg_div_${i}${j}`;
-      alias     = div_alias[i*3 + j];
+      const div_id = `_fg_div_${i}${j}`;
+      const alias  = div_alias[i][j];
       div[i][j] = div[alias] = create_div(this, div_id);
     }
   }
   div[4][0] = div.bot_paging = create_div(this, '_fg_div_40');
 
-  left_height = (this.cfg.header_height + this.cfg.height);
-  if(this.cfg.calc_row === 'bottom')
-    left_height += this.cfg.row_height;
 
-  div.left      = create_div(this, '_fg_div_left').height(left_height);
-  div.right     = create_div(this, '_fg_div_right').height(left_height);
+  const left_height   = (this.cfg.header_height + this.cfg.height);
+  const bottom_height = (this.cfg.calc_row === 'bottom') ? this.cfg.row_height : 0;
+  const _height       = left_height + bottom_height;
+
+  div.left      = create_div(this, '_fg_div_left').height(_height);
+  div.right     = create_div(this, '_fg_div_right').height(_height);
   div.bot_left  = create_div(this, '_fg_div_bot_left').append(div.bot_empty);
   div.bot_right = create_div(this, '_fg_div_bot_right').appendTo(div.scroll_h);
 
@@ -2156,7 +2166,8 @@ function _div_setting(){
   div.cover = create_div(this, '_fg_div_cover').appendTo(div.main);
   div.under_line_left  = $('<div>', {style: 'border-top:' + _style.row_bot_line});
   div.under_line_right = $('<div>', {style: 'border-top:' + _style.row_bot_line});
-  return div; };
+  return div;
+};
 
 /**
  * 메인 테이블 생성, 각 td 에 div 셋팅
