@@ -1893,12 +1893,12 @@ function _create_buttons(_this){
   };
   
   function drill(event){
-    
-    var gen_col  = _this.get_gen_col(),
-      row        = _toInt($(this).attr('row')),
-      parent_row = _this.data[row],
-      top_gen    = parent_row[gen_col],
-      flag       = {};
+
+    const gen_col    = _this.get_gen_col();
+    const row        = _toInt($(this).attr('row'));
+    const parent_row = _this.data[row];
+    const top_gen    = parent_row[gen_col];
+    const flag       = {};
 
     flag[top_gen] = parent_row;
 
@@ -1907,8 +1907,8 @@ function _create_buttons(_this){
       
       // loop : makeTree
       for (var i = row + 1; i < _this.data.length; i++) {
-        var this_row = _this.data[i],
-          gen        = this_row[gen_col];
+        const this_row = _this.data[i];
+        const gen      = this_row[gen_col];
         
         // drill 작업이 끝나면 break;
         if(gen <= top_gen) break;
@@ -1928,39 +1928,36 @@ function _create_buttons(_this){
       } // end of loop : makeTree
       
       // 숨김 대상을 제외한 나머지 데이터만 보여준다.
-      var temp_data = [];
+      const temp_data = [];
       for (var i = 0; i < _this.data.length; i++) {
-        var this_row = _this.data[i];
-        if( ! _this.data[i].hide)
+        const this_row = _this.data[i];
+        if( ! this_row.hide)
           temp_data.push(this_row);
       }
-      
       _this.data = temp_data;
-
       // end of drill up
-      
     } else {
       // drill down
 
       remove_empty_rows();
 
       // 숨김 표시를 해제한다.
-      var temp_row = parent_row.children.map(function(r){ r.hide = false; return r;});
-      var head = _this.data.slice(0, row + 1);
-      var tail = _this.data.slice(row + 1);
+      const temp_row = parent_row.children.map(function(r){ r.hide = false; return r;});
+      const head     = _this.data.slice(0, row + 1);
+      const tail     = _this.data.slice(row + 1);
       
       _this.data = head.concat(temp_row, tail);
       parent_row.children = undefined;
-    }
-    
-    
+      
+    } // end of drill down
+
     if(_this.data.length < _this.rows.length){
-      var last = _this.rows.length - _this.data.length;
-      var empty_rows = _this.create_init_data(last);
+      const last       = _this.rows.length - _this.data.length;
+      const empty_rows = _this.create_init_data(last);
       _this.data = _this.data.concat(empty_rows);
     }
     
-    _this.data.map(function(r, index){ r.index = index; return r; });
+    _this.data.forEach(function(r, index){ r.index = index; });
     
     _adjust_scroll_v(_this, _this.data.length);  // scroll bar 조정
     _this.refresh();
@@ -1972,41 +1969,38 @@ function _create_buttons(_this){
   // 더블클릭시에는 모든 자식 node 를 전부 열어 보여준다
   function drill_straight(event){
 
-    var row      = _toInt($(this).attr('row')),
-      gen_col    = _this.get_gen_col(),
-      parent_row = _this.data[row],
-      top_gen    = parent_row[gen_col],
-      temp_head  = _this.data.slice(0, row + 1),
-      temp_body  = parent_row.children,
-      temp_tail  = _this.data.slice(row + 1),
-      temp_result;
+    const row        = _toInt($(this).attr('row'));
+    const parent_row = _this.data[row];
 
-    if( ! _.isArray(temp_body))
-      return;
+    if( ! _.isArray(parent_row.children)) return;
     
+    const temp_head = _this.data.slice(0, row + 1);
+    const temp_body = parent_row.children;
+    const temp_tail = _this.data.slice(row + 1);
+
     // children 이 딸린 tree 구조의 배열을 하나의 배열로 평탄화하는 함수 
-    var platten = function platten(array){
-      for (var i = 0; i < array.length; i++) {
-        var row = array[i];
-        if(row.children){
-          var head = array.slice(0, i + 1),
-            body   = row.children,
-            tail   = array.slice(i + 1);
-          row.children = undefined;
-          array = head.concat(body, tail);
+    function platten (array) {
+      
+      var arr = array;
+
+      for (var i = 0; i < arr.length; i++) {
+        const _row = arr[i];
+        if(_row.children){
+          const head = arr.slice(0, i + 1);
+          const body   = _row.children;
+          const tail   = arr.slice(i + 1);
+          _row.children = undefined;
+          arr = head.concat(body, tail);
         }
       }
-      array = array.map(function(r){ r.hide = undefined; return r; });
-      return array;
-    };
+      return arr.map(function(r){ r.hide = undefined; return r; });
+    }
     
     // start drill straight open
     parent_row.children = undefined;
     
     // 버튼을 누른 행의 자식을 평탄화하여 하나의 배열로 만드는 작업을 한다.
-    temp_body = platten(temp_body);
-    temp_result = temp_head.concat(temp_body, temp_tail);
-    _this.data = temp_result;
+    _this.data = temp_head.concat( platten(temp_body), temp_tail );
 
     // empty rows 를 제거하고 화면을 refresh 한다.
     remove_empty_rows();
@@ -2023,7 +2017,8 @@ function _create_buttons(_this){
       else
         break;
     }
-    return; }
+    return;
+  }
 };
 
 /**
