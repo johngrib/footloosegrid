@@ -1782,7 +1782,8 @@ function _set_cell_left_array(){
     this.scheme[i].left = left;
     left += this.scheme[i].width;
   }
-  return this; };
+  return this;
+};
 
 /**
  * 데이터 셀을 생성한다.
@@ -1793,16 +1794,15 @@ function _set_cell_left_array(){
  */
 function _create_cell(cell_scheme, element, index, height, mode){
 
-  var set         = this.get_cell_define()[cell_scheme.type],
-    is_readonly = ! cell_scheme.edit,
-    is_select   = (set.element === 'select'),
-    is_date     = (cell_scheme.type === 'date'),
-    is_calc_row = mode === 'calc_row',
-    is_checkbox = /check|radio/.test(cell_scheme.type),
-    cell, attr, append_options, evt_name, evt_function;
+  const set         = this.get_cell_define()[cell_scheme.type];
+  const is_select   = (set.element === 'select');
+  const is_calc_row = mode === 'calc_row';
+  const is_checkbox = /check|radio/.test(cell_scheme.type);
+
+  var evt_name, evt_function;
 
   // 1. cell attribute 설정
-  attr = {
+  const attr = {
     id     : `${this.get_id()}_proto_col_${index}`,
     name   : cell_scheme.name,
     col    : index,
@@ -1810,41 +1810,31 @@ function _create_cell(cell_scheme, element, index, height, mode){
     type   : is_calc_row ? 'text' : set.type
   };
   
-  if(_.isNumber(cell_scheme.size))
-    attr.maxlength = cell_scheme.size;
+  if(_.isNumber(cell_scheme.size)) attr.maxlength = cell_scheme.size;
 
   // 2. 사용자 입력 cell 생성
-  cell = $(`<${element || set.element}>`, attr);
+  const cell = $(`<${element || set.element}>`, attr);
 
   // 2.1. select 인 경우 option 을 붙여준다.
-  append_options = function(){
-    cell_scheme[set.scheme].forEach(function(v){
-      $('<' + set.child + '>', v).appendTo(cell);
-    });
-    return; };
-
   if(!element && is_select && set.child)
-    append_options();
+    cell_scheme[set.scheme].forEach((v) => $('<' + set.child + '>', v).appendTo(cell) );
 
   // 3. 이벤트 bind
   if(!element && set.event) {
-    for(evt_name in set.event){
-      evt_function = set.event[evt_name];
-      cell[evt_name](evt_function);  // evt_name : jQuery 의 이벤트 바인딩 펑션 이름이 문자열로 입력되도록 한다
-    }
+    _.map(set.event, (func, evt_name) => cell[evt_name](func) );
   }
 
   // checkbox, radio 인 경우의 처리
   if(!is_calc_row && is_checkbox){
-    cell.height(this.cfg.checkbox_size)
-      .width('100%');
-    cell = $('<div>', {'class': _style.idiv}).append(cell);
-    cell.css('padding-top', (this.cfg.row_height - this.cfg.checkbox_size) / 2);
+    cell.height(this.cfg.checkbox_size).width('100%');
+    const cell_outer = $('<div>', {'class': _style.idiv}).append(cell);
+    cell_outer.css('padding-top', (this.cfg.row_height - this.cfg.checkbox_size) / 2);
+    return cell_outer;
   } else {
     cell.height(height);
+    return cell;
   }
-
-  return cell; };
+};
 
 
 /**
@@ -1854,58 +1844,41 @@ function _create_cell(cell_scheme, element, index, height, mode){
  */
 function _create_col_style(_this, col_index){
 
-  var scheme_length = _this.scheme.length;
-  for (var i = col_index; i < scheme_length; ++i) {
-    var v       = _this.scheme[i],
-      set     = _this.get_cell_define()[v.type],
-      _width  = v.width + set.width_adj,
-      css_name= `${_this.get_id()}_col_${i}`,
-      is_hide = _width <= 0,
-      attr, exp, key;
+  _.range(col_index, _this.scheme.length).forEach((i) => {
 
-    attr = {
+    const v       = _this.scheme[i];
+    const set     = _this.get_cell_define()[v.type];
+    const _width  = v.width + set.width_adj;
+    const css_name= `${_this.get_id()}_col_${i}`;
+    const is_hide = _width <= 0;
+
+    const attr = {
       'text-align': v.align,
-      'left'      : _this.scheme[i].left + 'px',
+      'left'      : v.left + 'px',
       'width'     : (is_hide) ? (0 + 'px') : (_width + 'px'),
       'display'   : (is_hide) ? 'none'     : 'inline',
       'background-color': (v.bg_color) ? v.bg_color : 'transparent'
     };
+    
+    const exp_header = '.' + css_name + ' {';
+    const exp_body   = _.reduce(attr, (before, current, key) => ( before + key + ':' + current + ';'), '');
+    const exp_tail   = '}';
+    
+    _insert_new_styles(_this, css_name, exp_header + exp_body + exp_tail);
 
-    exp = '.' + css_name + ' {';
-    for(key in attr)
-      exp += key + ':' + attr[key] + ';';
-    exp += '}';
-    _insert_new_styles(_this, css_name, exp);
-  }
-  return this; };
+  });
+  return this;
+};
 
 /**
  * row 생성을 위한 초기 데이터를 생성한다
  * @returns {Array}
  */
 FGR.prototype.create_init_data = function(row_count){
-
-  var data = [],
-    row  = [],
-    data_generate;
-
-  data_generate = {
-    gen_label : function(){return '';},
-    gen       : function(){return '';}
-  };
-
-  if(row_count === undefined)
-    row_count = this.cfg.rows_show;
-  
-  this.scheme.forEach(function(column, j){
-    //row[j] = (data_generate[column.type]) ? data_generate[column.type]() : null;
-    row[j] = column.init_data;
-  });
-
-  for(var i = 0; i < row_count; ++i)
-    data[i] = row.slice(0);
-
-  return data; };
+  const row_cnt = row_count || this.cfg.rows_show;
+  const row     = this.scheme.map((col) => col.init_data);
+  return _.range(row_cnt).map(() => [...row]);
+};
 
 /**
  * 버튼들의 프로토타입을 생성한다. clone 하여 사용하면 된다.
