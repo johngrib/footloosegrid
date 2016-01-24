@@ -1111,8 +1111,8 @@ FGR.prototype.Create_grid = function Create_grid() {
        { div_name: 'scroll_h',  height: scr_width + 1, width : right_show + 2, scroll : scroll_h_func },
        { div_name: 'scroll_v',  height: this.cfg.scroll_v_height,
          width    : scr_width + 1,
-         mouseover() { this.scroll_mode = true; },
-         mouseout () { this.scroll_mode = false; },
+         mouseover: () => { this.scroll_mode = true;  },
+         mouseout : () => { this.scroll_mode = false; },
          scroll   : scroll_v_func,
          child    : this.scroll_v_inner }
     ];
