@@ -1489,11 +1489,17 @@ function _create_rows(_this, data, callback){
     // drill 모드일 경우 gen_label 을 셋팅한다
     function set_gen_label (i, k, _this) {
       if('gen_label' === _this.scheme[k].type){
+        // drill_cell 과 drill_btn 할당
         _this.drill_cell[i] = _this.cell[i][k];
-        _this.cell[i][k]    = _this.gen_label[i] = $('<span>');
         _this.drill_btn[i]  = _this.buttons.drill_btn_minus.clone(true, true);
+
+        // cell 에 드릴 버튼과  텍스트 입력용 span 을 append 한다.
+        const $input = $('<span>');
         _this.cell[i][k].empty()
-             .append(_this.drill_btn[i], _this.gen_label[i]);
+             .append(_this.drill_btn[i], $input);
+        
+        // getter, setter 가 제대로 작동하도록 cell 에 span 을 입력한다.
+        _this.cell[i][k] = $input;
       }
     }
     
