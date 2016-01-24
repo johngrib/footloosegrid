@@ -1453,84 +1453,84 @@ function _attatch_evt_excel(_this){
  * @returns {FGR}
  */
 function _create_rows(_this, data, callback){
-  var fence  = _this.cfg.fixed_header,
-    end    = _this.scheme.length,
-    inputs = [],
-    temp_row, div;
 
   // 프로토타입 row 를 복제한다
-  temp_row = [
+  const temp_row = [
     _this.proto.row[0].clone(true, true),
     _this.proto.row[1].clone(true, true)
   ];
   
-  _this.scheme.forEach(function(column, i){
-    div = (i < this.cfg.fixed_header) ? 0 : 1;
-    inputs[i] = temp_row[div].find(`${column.element}[col=${i}]`);
-  }, _this);
+  const inputs = _this.scheme.map((column, i) => {
+    const div = (i < _this.cfg.fixed_header) ? 0 : 1;
+    return temp_row[div].find(`${column.element}[col=${i}]`);
+  });
 
-  append_row(0, _this.cfg.rows_show, end, temp_row, inputs, _this);
+  append_row(0, _this.cfg.rows_show, _this.scheme.length, temp_row, inputs, _this);
   
   _this.div.row_label.append(_this.div.under_line_left);
   _this.div.data_table.append(_this.div.under_line_right);
 
+  // 수직 스크롤 바의 길이를 조절한다.
   _this.hidden_row_cnt = 0;
   _adjust_scroll_v(_this, _this.data.length);
 
   // 하나의 row 를 추가해 주는 function
   function append_row (from, to, end, temp_row, inputs, _this){
     
-    var _id = _this.get_id(),
-      scheme_length, set_cell_id, set_gen_label, set_row;
-    
     // cell 에 id 를 입력한다
-    set_cell_id = function(i, j, _this){
-      var column = _this.scheme[j],
-        _div   = (j < _this.cfg.fixed_header) ? 0 : 1;
-      _this.cell[i][j] = _this.rows[i][_div].find(column.element + '[col=' + j + ']')
-        .attr({id: _id + '_cell_' + i + '_' + j, row: i});
-    };
+    function set_cell_id (i, j, _this) {
+      const element= _this.scheme[j].element;
+      const _div   = (j < _this.cfg.fixed_header) ? 0 : 1;
+      const query  = `${element}[col=${j}]`;
+      const id     = `${_this.get_id()}_cell_${i}_${j}`;
+      _this.cell[i][j] = _this.rows[i][_div].find(query).attr({id, row: i});
+    }
     
     // drill 모드일 경우 gen_label 을 셋팅한다
-    set_gen_label = function(i, k, _this){
-      var column = _this.scheme[k],
-        input  = _this.cell[i][k];
-      if('gen_label' === column.type){
-        //console.log(_this.cell[i][k]);
+    function set_gen_label (i, k, _this) {
+      if('gen_label' === _this.scheme[k].type){
         _this.drill_cell[i] = _this.cell[i][k];
-        _this.cell[i][k] = _this.gen_label[i] = $('<span>');
-        _this.drill_btn[i] = _this.buttons.drill_btn_minus.clone(true, true);
-        input.empty()
-          .append(_this.drill_btn[i], _this.gen_label[i]);
+        _this.cell[i][k]    = _this.gen_label[i] = $('<span>');
+        _this.drill_btn[i]  = _this.buttons.drill_btn_minus.clone(true, true);
+        _this.cell[i][k].empty()
+             .append(_this.drill_btn[i], _this.gen_label[i]);
       }
-    };
+    }
     
     // row 를 셋팅한다
-    set_row = function(i, m, _this){
-      _this.rows[i][m].get(0).setAttribute('id', _id + '_row_' + m + '_' + i);
+    function set_row (i, m, _this) {
+      _this.rows[i][m].get(0).setAttribute('id', `${_this.get_id()}_row_${m}_${i}`);
       _this.rows[i][m].get(0).setAttribute('row', i);
       _this.div[2][m].append(_this.rows[i][m]);
     };
 
-    scheme_length = _this.scheme.length;
-    for(var i = from; i < to; ++i) {
+    const scheme_length = _this.scheme.length;
+    
+    _.range(from, to).forEach( (i) => {
+
       _this.rows[i] = [ temp_row[0].clone(true, true), temp_row[1].clone(true, true)];
       _this.cell[i] = [];
 
       for(var j = 0; j < scheme_length; ++j)
         set_cell_id(i, j, _this);  // cell 에 id 를 부여한다
 
+      // drill 모드라면 gen_label 을 설정해 준다
       if(_this.get_gen_col() >= 0)
         for(var k = 0; k < end; ++k)
-          set_gen_label(i, k, _this);  // drill 모드라면 gen_label 을 설정해 준다
+          set_gen_label(i, k, _this);  
 
-      for(var m = 0; m < 2; ++m)
-        set_row(i, m, _this);
-    }
+      set_row(i, 0, _this);
+      set_row(i, 1, _this);
+      
+      return;
+    }); // end of _.range.forEach
 
     _this.scroll_v_inner.height(to * _this.cfg.row_height);
-    return; }
-  return _this; };
+    return; 
+  } // end of append_row
+
+  return _this; 
+};
 
 /**
  * header cell 을 생성한다
