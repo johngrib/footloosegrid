@@ -1541,30 +1541,33 @@ function _create_rows(_this, data, callback){
  */
 function _create_header(div_index, start, end){
 
-  var labels    = this.header_labels,
-    blur_func = function(){ this.blur(); },
-    top       = 0;
+  function blur_func () {
+    this.blur();
+  };
+  
+  const range = _.range(start, end);
+  
+  this.header_labels.forEach((v, row) => {
+    range.forEach((col) => {
 
-  labels.forEach(function(v, i){
-    var left = 0,
-      cell, inner;
+      const column = this.scheme[col];
 
-    for(var j = start; j < end; ++j){
-      cell = $('<div>',{row: i, col: j, col_merge: 1, row_merge: 1, 'class': _style.cell})
+      const cell   = $('<div>',{row, col, col_merge: 1, row_merge: 1, 'class': _style.cell})
         .height(this.cfg.row_height)
-        .width(this.scheme[j].width)
-        .css({left: left, top: top})
+        .width(column.width)
+        .css({ left: column.left, top: row * this.cfg.row_height })
         .appendTo(this.div[0][div_index]);
-      inner = _create_header_cell_inner.call(this, i, j, this.scheme[j], v[j])
-        .attr('align', this.scheme[j].h_align)
+
+      const inner = _create_header_cell_inner.call(this, row, col, column, v[col])
+        .attr('align', column.h_align)
+        //.focus(blur_func)
         .focus(blur_func)
         .appendTo(cell);
-      left += this.scheme[j].width;
-    }
-    top += this.cfg.row_height;
-  }, this);
+    });
+  });
 
-  return this; };
+  return this;
+};
 
 /**
  * header_cell_inner 를 생성한다
@@ -1575,22 +1578,24 @@ function _create_header(div_index, start, end){
  */
 function _create_header_cell_inner(row, col, cell_scheme, label){
 
-  var type = 'str_label',
-    def  = this.get_cell_define()[type],
-    attr = {
+  const def  = this.get_cell_define()['str_label'];
+  const attr = {
+      row,
+      col,
       type    : /^\&(checkbox|radio)$/.test(label) ? label.slice(1) : def.type,
-      row     : row,
-      col     : col,
       name    : cell_scheme.name,
-      readonly: ! (type.match(/check|radio/i)),
-      'class' : _style.label
-    },
-    ret  = $(`<${def.element}>`, attr)
+      //readonly: ! (type.match(/check|radio/i)),
+      readonly: true,
+      'class' : _style.label,
+  };
+
+  const ret = $(`<${def.element}>`, attr)
       .val(label)
       .css('text-align', cell_scheme.h_align)
       .height(_style.row_height - 1);
 
-  return ret; };
+  return ret; 
+};
 
 /**
  * 헤더 레이블을 2차원 배열로 생성해 리턴한다
@@ -1598,26 +1603,19 @@ function _create_header_cell_inner(row, col, cell_scheme, label){
  * @returns {Array}
  */
 function _get_header_labels_array(){
-  var row_max  = 0,
-    temp     = [],
-    labels   = [],
-    set_label= function(v, j){ labels[i][j] = temp[j][i]; },
-    one_col;
 
-  this.scheme.forEach(function(col){
-    var len;
-    one_col = col.label.split('||');
-    temp.push(one_col);
-    len = one_col.length;
-    if(len > row_max)
-      row_max = len;
+  const temp   = this.scheme.map((col) => col.label.split('||') );
+  const range  = _.range(_.max(temp.map((v) => v.length)));
+  const labels = range.map((r) => []);
+  
+  // temp 배열을 pivot 하여 labels 배열을 완성한다.
+  range.forEach((i) => {
+    this.scheme.forEach((v, j) => { 
+      labels[i][j] = temp[j][i] 
+    });
   });
-
-  for(var i = 0; i < row_max; ++i){
-    labels.push([]);
-    this.scheme.forEach(set_label);
-  }
-  return labels; };
+  return labels;
+};
 
 /**
  * 헤더 레이블 cell 객체를 찾아 리턴해 준다
@@ -1627,20 +1625,18 @@ function _get_header_labels_array(){
  */
 FGR.prototype.get_header_cell = function (row, col){
 
-  if(this.header_cells[row] && this.header_cells[row][col])
-    return this.header_cells[row][col];
+  if(this.header_cells[row] && this.header_cells[row][col]) return this.header_cells[row][col];
 
-  var _this = this,
-    div   = this.div[0][(col >= this.cfg.fixed_header) ? 1 : 0],
-    cell;
-
-  cell  = div.find('.' + _style.cell).filter(function(){
-        var loc = _this.get_loc(this);
+  const _this = this;
+  const div   = this.div[0][(col >= this.cfg.fixed_header) ? 1 : 0];
+  const $cell = div.find('.' + _style.cell).filter(function(){
+        const loc = _this.get_loc(this);
         return loc.row === row && loc.col === col;
       });
 
-  this.header_cells[row][col] = (cell.length === 1) ? cell : null;
-  return cell; };
+  this.header_cells[row][col] = ($cell.length === 1) ? $cell : null;
+  return $cell;
+};
 
 /**
  * 헤더 레이블에 대하여 수직 merge 작업을 수행한다
@@ -1648,17 +1644,17 @@ FGR.prototype.get_header_cell = function (row, col){
  */
 function _create_merge_v_header(){
 
-  var labels  = this.header_labels,
-    col_cnt = this.scheme.length,
-    row_cnt = this.header_labels.length;
+  const labels  = this.header_labels;
+  const col_cnt = this.scheme.length;
+  const row_cnt = this.header_labels.length;
 
-  for (var col = 0; col < col_cnt; ++col) {
+  _.range(col_cnt).forEach((col) => {
     for (var row = row_cnt - 1; row > 0; --row) {
       if(labels[row][col] === undefined){
-        var upper_cell   = this.get_header_cell(row-1, col),
-          this_cell    = this.get_header_cell(row,   col),
-          upper_height = upper_cell.height(),
-          this_height  = this_cell.height();
+        const upper_cell   = this.get_header_cell(row-1, col);
+        const this_cell    = this.get_header_cell(row,   col);
+        const upper_height = upper_cell.height();
+        const this_height  = this_cell.height();
 
         if(upper_cell.width() === this_cell.width()){
           var this_merge_cnt  = _toInt( this_cell.attr('row_merge')),
@@ -1667,8 +1663,12 @@ function _create_merge_v_header(){
           this_cell.remove();
           upper_cell.height(upper_height + this_height);
           upper_cell.attr('row_merge', this_merge_cnt + upper_merge_cnt);
-        } } } } // end of two loops
-  return this; };
+        } // end of if upper_cell
+      } // end of if labels 
+    } // end of row loop 
+  }); // end of col loops
+  return this;
+};
 
 /**
  * 헤더 레이블에 대하여 수평 merge 작업을 수행한다
@@ -1676,60 +1676,60 @@ function _create_merge_v_header(){
  */
 function _create_merge_h_header(){
 
-  var labels  = this.header_labels,
-    row_cnt = this.header_labels.length,
-    start   = 0,
-    fence   = this.cfg.fixed_header,
-    end     = this.scheme.length,
-    merge_job;
+  const labels    = this.header_labels;
+  const row_range = _.range(this.header_labels.length);
 
-  merge_job = function(start_col, end_col){
-    for(var row = 0; row < row_cnt; ++row){
+  function merge_job (start_col, end_col) {
+    
+    row_range.forEach((row) => {
       for(var col = end_col - 1; col > start_col; --col){
-
-        var is_no_check = ! /radio|check/i.test(this.scheme[col].type);
+        const is_no_check = ! /radio|check/i.test(this.scheme[col].type);
 
         if(is_no_check && labels[row][col - 1] === labels[row][col]){
-          var left_cell = this.get_header_cell(row, col-1),
-            this_cell = this.get_header_cell(row, col  );
+          const left_cell = this.get_header_cell(row, col-1);
+          const this_cell = this.get_header_cell(row, col  );
 
           if(left_cell.height() === this_cell.height()){
-            var this_merge_cnt = _toInt(this_cell.attr('col_merge')),
-              left_merge_cnt = _toInt(left_cell.attr('col_merge'));
+            const this_merge_cnt = _toInt(this_cell.attr('col_merge'));
+            const left_merge_cnt = _toInt(left_cell.attr('col_merge'));
 
             this_cell.attr('removed', true).remove();
             left_cell.width(left_cell.width() + this_cell.width());
             left_cell.attr('col_merge', this_merge_cnt + left_merge_cnt);
-          } } } } // end of two loops
-    return; };
+          }
+        }
+      }
+    }); // end of row_range.forEach
+  }
 
-  merge_job.call(this, start, fence);
-  merge_job.call(this, fence, end);
-
-  return this; };
+  const fence   = this.cfg.fixed_header;
+  merge_job.call(this, 0, fence);
+  merge_job.call(this, fence, this.scheme.length);
+  return this;
+};
 
 /**
  * 헤더 셀 내부 수직 정렬을 조절한다
  */
 function _create_adjust_header_cell_v_loc(_this){
 
-  var adjust = function(){
-    var $this = $(this),
-      input = $this.find('input'),
-      top   = ($this.height() - _this.cfg.row_height) / 2;
+  function adjust () {
+    const $this = $(this);
+    const $input= $this.find('input');
+    const top   = ($this.height() - _this.cfg.row_height) / 2;
 
-    input.css('top', top);
-    if(/checkbox|radio/.test(input.attr('type'))){
-      input.height(_this.cfg.checkbox_size)
-        .width('100%');
+    $input.css('top', top);
+    if(/checkbox|radio/.test($input.attr('type'))){
+      $input.height(_this.cfg.checkbox_size)
+            .width('100%');
     }
-  };
+  } // end of function
 
-  for(var i = 0; i < 2; i++)
-    _this.div[0][i].find('.'+_style.cell).each(adjust);
-
-  return _this; };
-
+  const query = '.' + _style.cell;
+  _this.div[0][0].find(query).each(adjust);
+  _this.div[0][1].find(query).each(adjust);
+  return _this;
+};
 
 /**
  * 데이터 row 의 프로토타입을 생성한다
@@ -1739,14 +1739,12 @@ function _create_adjust_header_cell_v_loc(_this){
  * @returns
  */
 function _create_proto_row(start, end, row_width){
-  var left = 0,
-    row  = $('<div>').addClass(_style.row).height(this.cfg.row_height);
-
-  for(var i = start; i < end; ++i) {
+  const row  = $('<div>').addClass(_style.row).height(this.cfg.row_height);
+  _.range(start, end).forEach( (i) => {
     this.proto.cell[i].clone(true, true).appendTo(row);
-    left += this.scheme[i].width;
-  }
-  return row; };
+  });
+  return row;
+};
 
 /**
  * 각 컬럼별 cell 의 프로토타입을 생성한다
@@ -1754,16 +1752,17 @@ function _create_proto_row(start, end, row_width){
  * @returns {Array}
  */
 function _create_proto_cell(element, mode){
-  var cells       = [],
-    cell_height = this.cfg.row_height,
-    _id         = this.get_id();
+
+  const cell_height = this.cfg.row_height;
   
-  this.scheme.forEach(function(column, i){
-    var adj  = ('select' === column.type) ? 0 : 1;
-    cells[i] = _create_cell.call(this, column, element, i, cell_height - adj, mode)
-      .addClass(`${_id}_col_${i}`);
-  }, this);
-  return cells; };
+  const cells = this.scheme.map((column, i) => {
+    const adj   = ('select' === column.type) ? 0 : 1;
+    const $cell = _create_cell.call(this, column, element, i, cell_height - adj, mode)
+                              .addClass(`${this.get_id()}_col_${i}`);
+    return $cell;
+  });
+  return cells;
+};
 
 /**
  * 각 셀의 left 좌표를 계산한다
