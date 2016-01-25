@@ -2957,7 +2957,8 @@ FGR.prototype.col_bg_color = function(col_index, color){
     return this;
   this.scheme[col_index].bg_color = color;
   _create_col_style(this, col_index);
-  return this; };
+  return this;
+};
 
 /**
  * 컬럼 리사이징
@@ -2971,19 +2972,15 @@ FGR.prototype.col_bg_color = function(col_index, color){
 FGR.prototype.col_resize = function(col_index, size){
 
   // cashing
-  if( ! this.left_header_cells)
-    this.left_header_cells = this.div.top_corner.find('.' + _style.cell);
-  if( ! this.right_header_cells)
-    this.right_header_cells = this.div.col_label.find('.' + _style.cell);
+  if( ! this.left_header_cells)  this.left_header_cells  = this.div.top_corner.find('.' + _style.cell);
+  if( ! this.right_header_cells) this.right_header_cells = this.div.col_label.find('.' + _style.cell);
 
-  var _this      = this,
-    fence_col  = this.scheme[this.cfg.fixed_header - 1],
-    last_col   = this.scheme[this.scheme.length    - 1],
-    left_width = fence_col.left + fence_col.width,
-    right_width= last_col.left  + last_col.width,
-    right_adj  = this.cfg.left_width - left_width,
-    right_rst  = this.cfg.right_width_show + right_adj + 1,
-    is_scroll_bar_h_show;
+  const fence_col  = this.scheme[this.cfg.fixed_header - 1];
+  const last_col   = this.scheme[this.scheme.length    - 1];
+  const left_width = fence_col.left + fence_col.width;
+  let   right_width= last_col.left  + last_col.width;
+  const right_adj  = this.cfg.left_width - left_width;
+  const right_rst  = this.cfg.right_width_show + right_adj + 1;
 
   // 1. 입력받은 size 를 해당 컬럼의 width 에 입력한다
   this.scheme[col_index].width = (size < 0) ? this.scheme[col_index].init_width : size;
@@ -3008,7 +3005,7 @@ FGR.prototype.col_resize = function(col_index, size){
   // 5. 수평 scroll 의 사이즈를 조정하고, show/hide 를 판단한다
   this.scroll_bar_h.width( right_width);
   this.div.bot_right.width(right_width);
-  is_scroll_bar_h_show = (this.div.right.width() <= this.div.data_table.width());
+  const is_scroll_bar_h_show = (this.div.right.width() <= this.div.data_table.width());
 
   // 6. 위에서 설정한 값들을 토대로 컬럼 리사이징 작업을 수행한다
   this.show_scroll_bar_h(is_scroll_bar_h_show);
@@ -3024,10 +3021,10 @@ FGR.prototype.col_resize = function(col_index, size){
       if(col.width > 0)
         next = {index: i, width: col.width};
     });
-    if(next)
-      this.col_resize(next.index, next.width);  // recursion
+    if(next) this.col_resize(next.index, next.width);  // recursion
   }
-  return this; };
+  return this;
+};
 
 /**
  * 수평 스크롤 바를 보이거나 숨긴다
@@ -3036,7 +3033,8 @@ FGR.prototype.col_resize = function(col_index, size){
  */
 FGR.prototype.show_scroll_bar_h = function(show){
   this.div.scroll_h.closest('tr')[show ? 'show' : 'hide']();
-  return this; };
+  return this;
+};
 
 /**
  * header cell 의 width 사이즈와 left 값을 조정한다.
@@ -3044,10 +3042,10 @@ FGR.prototype.show_scroll_bar_h = function(show){
  */
 function _re_size_header(_this, cells){
   cells.each(function(){
-    var v      = $(this),
-      col    = _toInt(v.attr('col')),
-      merge  = _toInt(v.attr('col_merge')),
-      width  = 0;
+    const v     = $(this);
+    const col   = _toInt(v.attr('col'));
+    const merge = _toInt(v.attr('col_merge'));
+    var width   = 0;
 
     for (var i = 0; i < merge; i++)
       width += _this.scheme[col + i].width;
@@ -3055,7 +3053,8 @@ function _re_size_header(_this, cells){
     v.css('left', _this.scheme[col].left);
     v.width(width);
   });
-  return _this; };
+  return _this;
+};
 
 /**
  * ajax 방식으로 json 데이터를 전송한다.
