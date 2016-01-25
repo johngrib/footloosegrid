@@ -2769,21 +2769,19 @@ FGR.prototype.Load_data = function(data, callback, filter){
   var _this = this;
   
   // 0. 데이터 로드를 할 때마다 초기화해야 하는 변수들을 처리한다.
-  (function(_this){
-    _this.highlight_row     = -1;
-    _this.row_selected      = -1;
-    _this.col_selected      = false;
-    _this.sorted            = false;
-    _this.filtered          = false;
-    _this.pre_filter_data   = undefined;
-    _this.highlight_refresh = true;
-    _this.clear_filter_condition(_this);
-    _this.scroll_row(-_this.data.length * 2);  // 스크롤을 가장 위로 올린다
-    
-    _this.scheme.forEach(function(col){
-      col.filter_icon.attr('class', _style.filter_btn);
-    });
-  })(this);
+  _this.highlight_row     = -1;
+  _this.row_selected      = -1;
+  _this.col_selected      = false;
+  _this.sorted            = false;
+  _this.filtered          = false;
+  _this.pre_filter_data   = undefined;
+  _this.highlight_refresh = true;
+  _this.clear_filter_condition(_this);
+  _this.scroll_row(-_this.data.length * 2);  // 스크롤을 가장 위로 올린다
+  
+  _this.scheme.forEach(function(col){
+    col.filter_icon.attr('class', _style.filter_btn);
+  });
   
   // 1. this.data 변수에 데이터를 입력한다.
   (function(_this){
@@ -2819,8 +2817,8 @@ FGR.prototype.Load_data = function(data, callback, filter){
       _this.data = temp_data;
     }
     
-    if(_.isFunction(filter))
-      _this.data = _this.data.filter(filter);
+    if(_.isFunction(filter)) _this.data = _this.data.filter(filter);
+
   })(this);
 
   // 2. 원본 데이터 보관 옵션이 true 라면 원본 데이터를 보관한다.
@@ -2850,18 +2848,17 @@ FGR.prototype.Load_data = function(data, callback, filter){
   // 6. calc_cell 계산값 표현
   this.refresh_calc_cell();
 
-  if(_.isFunction(callback))
-    callback();
+  if(_.isFunction(callback)) callback();
 
   return this; };
 
 /**
  * data_table 의 row 숫자를 리턴한다.
- * TODO : 처분을 고민할 것.
  * @returns
  */
 FGR.prototype.Row_count = function(){
-  return (this.data) ? this.data.length : this.div.data_table.find('.' + _style.row).length;};
+  return (this.data) ? this.data.length : this.div.data_table.find('.' + _style.row).length;
+};
 
 /**
  * row 를 삭제한다
@@ -2877,43 +2874,44 @@ FGR.prototype.Row_count = function(){
  * Delete_row('check', 0); -> 0번 컬럼의 체크박스를 검사하여, 표시가 된 row 를 삭제한다
  * Delete_row('radio', 1); -> 1번 컬럼의 라디오 버튼을 검사하여, 표시가 된 row 를 삭제한다
  */
-FGR.prototype.Delete_row = function(row, col){
+FGR.prototype.Delete_row = function(input_row, col){
+  
+  function is_check_type (row) {
+    return /^(?:check|radio)$/i.test(row);
+  };
 
-  if(row === undefined)
-    row = this.data.length - 1;
-
-  var _this         = this,
-    is_check_type = function(row){ return /^(?:check|radio)$/i.test(row); },
-    target_arr, empty_rows, empty_data;
+  const _this = this;
+  const row   = (input_row === undefined) ? this.data.length - 1 : input_row;
 
   // 1. 삭제할 target 수집
-  target_arr = (function(){
-    if (is_check_type(row))    return _this.Get_checked(col);
-    if (_is_number(row)) return [row];
-    if (Array.isArray(row))    return row;
-    if (/^all$/i.test(row))    return 'all';
-    else                       return undefined;
+  const target_arr = (function(){
+    if (is_check_type(row)) return _this.Get_checked(col);
+    if (_is_number(row))    return [row];
+    if (Array.isArray(row)) return row;
+    if (/^all$/i.test(row)) return 'all';
+    else                    return undefined;
   })();
 
   // 2. 삭제 작업 : deleted_data 에 백업 후 data 갱신
-  if(target_arr === undefined){
-    return this;
-  } else if(target_arr === 'all'){
+  if(target_arr === undefined) return this;
+
+  if(target_arr === 'all'){
     this.deleted_data = this.deleted_data.concat(this.data);
     this.data         = this.create_init_data();
   } else {
+    // 배열인 경우
     target_arr.forEach(function(v,i){ this.data[v].del = true; }, this);
-    this.deleted_data = this.data.filter(function(row){ return  row.del; });
-    this.data         = this.data.filter(function(row){ return !row.del; });
+    this.deleted_data = this.data.filter((row) =>  row.del);
+    this.data         = this.data.filter((row) => !row.del);
     this.deleted_data.forEach(function(row){ delete row.del; });
   }
 
   // 3. 삭제 후, 남아있는 row 가 페이지 상의 row 수보다 적은 경우를 처리한다.
-  empty_rows = this.rows.length - this.data.length;
+  const empty_rows = this.rows.length - this.data.length;
   if(empty_rows > 0){
     // 빈 데이터 row 를 생성한 다음, this.data 에 이어 붙인다
-    empty_data = this.create_init_data().slice(0, empty_rows);
-    this.data  = this.data.concat(empty_data);
+    const empty_data = this.create_init_data(empty_rows);
+    this.data        = this.data.concat(empty_data);
   }
 
   // 4. indexing
@@ -2923,7 +2921,8 @@ FGR.prototype.Delete_row = function(row, col){
   // 5. rendering
   this.render_data(this, 0);
   _adjust_scroll_v(this, this.data.length);
-  return this; };
+  return this;
+};
 
 /**
  * 체크박스/라디오버튼이 있는 col 를 검사하여 체크 표시가 된 row 의 인덱스 넘버를 배열로 리턴한다
@@ -2934,19 +2933,17 @@ FGR.prototype.Delete_row = function(row, col){
  * Get_checked(0)    : 0 번 컬럼을 검사하여 체크 표시가 된 row 의 인덱스 넘버를 리턴한다
  * Get_checked('pk') : scheme 에서 name 을 pk 로 준 컬럼을 검사하여 체크 표시가 된 row 의 인덱스 넘버를 리턴한다
  */
-FGR.prototype.Get_checked = function(col){
-
-  var _this   = this,
-    checked = [];
-
-  if(_.isString(col))
-    col = _.findIndex(this.scheme, {name: col});
+FGR.prototype.Get_checked = function(column){
+  
+  const col     = (_.isString(col)) ? _.findIndex(this.scheme, {name: col}) : column;
+  const checked = [];
   
   this.data.forEach(function(row, i){
     if(row[col] > 0) checked.push(i);
   });
   
-  return checked; };
+  return checked;
+};
 
 /**
  * 컬럼 백그라운드 컬러링
