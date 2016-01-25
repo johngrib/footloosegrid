@@ -2176,36 +2176,39 @@ function _div_setting(){
  */
 function _tbl_setting(){
 
-  function create_pure_table(_this, row, col, attribute) {
-    var col_index  = col,
-      create_tr  = function(){ return $('<tr>'); },
-      create_td  = function(){ return $('<td>', {height: _this.cfg.row_height, valign: 'top'}); },
-      $tbl       = $('<table>', attribute),
-      $tr;
-    while (row-->0) {
-      $tr = create_tr().appendTo($tbl);
-      while (col_index--> 0)
-        create_td().appendTo($tr);
-      col_index = col;
-    }
-    return $tbl; };
+  function create_simple_table(_this, row, col, attribute) {
 
-  var attr = {
-      id      : `${this.get_id()}_fg_main_table`,
-       'class': '_fg_main_table',
-       border : 0, cellspacing : 0, cellpadding : 0 },
-    tbl  = { main : create_pure_table(this, 3, 3, attr).appendTo(this.div.main) },
-    $tds = tbl.main.find('tr:eq(1) td'),
-    $tr  = tbl.main.find('tr').eq(2).empty();  // bot_paging 영역 확보
+    function create_tr () { return $('<tr>'); };
+    function create_td () { return $('<td>', {height: _this.cfg.row_height, valign: 'top'}); };
+
+    const col_range = _.range(col);
+    const $tbl      = $('<table>', attribute);
+    
+    _.range(row).forEach(() => {
+      const $tr = create_tr().appendTo($tbl);
+      col_range.forEach( () => create_td().appendTo($tr) );
+    });
+    return $tbl;
+  };
+
+  const attr = {
+    id      : `${this.get_id()}_fg_main_table`,
+     'class': '_fg_main_table',
+     border : 0, cellspacing : 0, cellpadding : 0,
+  };
+  const tbl  = {
+    main : create_simple_table(this, 3, 3, attr).appendTo(this.div.main)
+  };
+  const $tds = tbl.main.find('tr:eq(1) td');
+  const $tr  = tbl.main.find('tr').eq(2).empty();  // bot_paging 영역 확보
 
   // main table 각각의 td 에 미리 생성해 둔 div 를 append 한다.
   tbl.main.find('tr:eq(0) td:eq(0)').append(this.div.left);
   tbl.main.find('tr:eq(0) td:eq(1)').append(this.div.right);
   tbl.main.find('tr:eq(0) td:eq(2)').append(this.div.scroll_v).attr({valign: 'bottom'})
-     .css({'padding-bottom': (this.cfg.calc_row === 'bottom') ? this.cfg.row_height+1 : 0});
+          .css({'padding-bottom': (this.cfg.calc_row === 'bottom') ? this.cfg.row_height+1 : 0});
 
-  ;['bot_empty', 'scroll_h', 'bot_corner'].forEach(function(v,i){
-    $tds.eq(i).append(this.div[v]); }, this);
+  ;['bot_empty', 'scroll_h', 'bot_corner'].forEach((v,i) => $tds.eq(i).append(this.div[v]) );
 
   // paging 옵션이 설정되어 있다면 index button 이 들어갈 공간을 준비한다.
   if(this.cfg.paging){
@@ -2215,7 +2218,8 @@ function _tbl_setting(){
   } else {
     $tr.css('background-color','red').remove();
   }
-  return tbl; };
+  return tbl;
+};
 
 /**
  * 그리드 상의 데이터 뷰를 갱신한다
