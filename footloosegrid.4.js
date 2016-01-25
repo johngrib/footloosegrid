@@ -2227,7 +2227,8 @@ function _tbl_setting(){
  */
 FGR.prototype.refresh = function(){
   this.render_data(this, this.current_top_line);
-  return this; };
+  return this;
+};
 
 /**
  * data cell 에 값을 입력하거나, 값을 가져온다
@@ -2240,16 +2241,25 @@ FGR.prototype.refresh = function(){
  * @returns
  */
 FGR.prototype.Cell_value = function(row, col, value){
+  const $cell  = this.cell[row][col];
+  const scheme = this.scheme[col];
+  const func   = (value === undefined) ? scheme.getter : scheme.setter;
+  return func($cell, value, row, col, this);
+};
 
-  var $cell  = this.cell[row][col],
-    scheme = this.scheme[col],
-    func   = (value === undefined) ? scheme.getter : scheme.setter;
-
-  return func($cell, value, row, col, this); };
-
+/**
+ * data cell 에 값을 입력한다.
+ * 예)
+ *  Set_cell_value(3,2, 77) : 3 row, 2 col 에 77 을 입력한다 (setter)
+ * @param row
+ * @param col
+ * @param value
+ * @returns
+ */
 FGR.prototype.Set_cell_value = function(row, col, value){
-  var $cell  = this.cell[row][col];
-  return this.scheme[col].setter($cell, value, row, col, this); };
+  const $cell = this.cell[row][col];
+  return this.scheme[col].setter($cell, value, row, col, this);
+};
 
 /**
  * 화면에 데이터를 보여주는 data render 펑션
@@ -2260,90 +2270,87 @@ FGR.prototype.Set_cell_value = function(row, col, value){
  */
 function _show_data(_this, row_cnt) {
   
-  var len = _this.scheme.length,
-    rsh = _this.cfg.rows_show,
-    row, one_row, i, j;
+  const len = _this.scheme.length;
+  const rsh = _this.cfg.rows_show;
+  let i, j;
 
   for(i = 0; i < rsh; ++i){
-    row     = row_cnt + i;
-    one_row = _this.data[row];
+    const row     = row_cnt + i;
+    const one_row = _this.data[row];
 
     if(one_row){
-      if(one_row.bg_color === undefined)
-        one_row.bg_color = 'transparent';
+        if(one_row.bg_color === undefined) one_row.bg_color = 'transparent';
 
-      _this.paint_one_row(i, one_row.bg_color);
+        _this.paint_one_row(i, one_row.bg_color);
 
-      for(j = 0; j < len; ++j){
-        _this.cell[i][j].attr('row', row);
-        //_this.Cell_value(i,j, one_row[j]);
-        _this.Set_cell_value(i,j, one_row[j]);
-      }
-      
-      
-      //if(_this.scheme[j].type === 'gen_label'){
-      
-      
+        for(j = 0; j < len; ++j){
+          _this.cell[i][j].attr('row', row);
+          _this.Set_cell_value(i,j, one_row[j]);
+        }
     }
   }
   _this.show_highlight_bar();
-  return _this; };
-  
+  return _this;
+};
+
+/**
+ * 드릴 다운 기능이 설정되었을 경우 사용되는 data render 펑션
+ * 이 펑션은 일반적인 방법으로 호출되지 않으며, data_render 변수에 담겨 호출된다
+ * @param _this
+ * @param row_cnt
+ * @returns {FGR}
+ */
 function _show_drill_data(_this, row_cnt) {
   
-  var len = _this.scheme.length,
-    rsh = _this.cfg.rows_show,
-    row, one_row, i, j;
+  const len = _this.scheme.length;
+  const rsh = _this.cfg.rows_show;
+  let i, j;
 
   for(i = 0; i < rsh; ++i){
-    row     = row_cnt + i;
-    one_row = _this.data[row];
+    const row     = row_cnt + i;
+    const one_row = _this.data[row];
 
     if(one_row){
 
-      for(j = 0; j < len; ++j){
-        // 값 표현
-        _this.cell[i][j].attr('row', row);
-        _this.Set_cell_value(i,j, one_row[j]);
-      }
-      
-      // gen_label 처리
-      var gen_col  = _this.get_gen_col();
-      var label_col= _this.get_gen_label_col();
-      var gen      = one_row[gen_col];
-      var next_row = ((row + 1) < _this.data.length) ? _this.data[row+1] : undefined;
-      var next_gen = next_row ? next_row[gen_col] : -1;
-      var btn      = _this.drill_btn[i];
-      var indent   = _style.drill_indent * gen;
+        for(j = 0; j < len; ++j){
+          // 값 표현
+          _this.cell[i][j].attr('row', row);
+          _this.Set_cell_value(i,j, one_row[j]);
+        }
+        
+        // gen_label 처리
+        const gen_col  = _this.get_gen_col();
+        const label_col= _this.get_gen_label_col();
+        const gen      = one_row[gen_col];
+        const next_row = ((row + 1) < _this.data.length) ? _this.data[row+1] : undefined;
+        const next_gen = next_row ? next_row[gen_col] : -1;
+        const btn      = _this.drill_btn[i];
+        const indent   = _style.drill_indent * gen;
 
-      btn.attr({ row: row, gen: gen });
-      _this.drill_cell[i].css('padding-left', indent);
-      _this.drill_cell[i].width(_this.scheme[label_col].width - indent - _style.input_padding);
-      
-      if (one_row.children) {
-        // 현재 row 가 children 을 숨기고 있다면 + 버튼을 보여준다.
-        btn.show();
-        btn.text('+');
-      } else if(gen < next_gen){
-        // 현재 row 가 부모인 경우 - 버튼을 보여준다.
-        btn.show();
-        btn.text('-');
-      } else {
-        // 현재 row 가 부모가 아닌 경우 버튼을 숨긴다.
-        btn.hide();
-      }
+        btn.attr({ row, gen });
+        _this.drill_cell[i].css('padding-left', indent);
+        _this.drill_cell[i].width(_this.scheme[label_col].width - indent - _style.input_padding);
+        
+        if (one_row.children) {
+          // 현재 row 가 children 을 숨기고 있다면 + 버튼을 보여준다.
+          btn.show();
+          btn.text('+');
+        } else if(gen < next_gen){
+          // 현재 row 가 부모인 경우 - 버튼을 보여준다.
+          btn.show();
+          btn.text('-');
+        } else {
+          // 현재 row 가 부모가 아닌 경우 버튼을 숨긴다.
+          btn.hide();
+        }
 
-
-      // 배경색 처리
-      if(one_row.bg_color === undefined) 
-        one_row.bg_color = 'transparent';
-      _this.paint_one_row(i, one_row.bg_color);
+        // 배경색 처리
+        if(one_row.bg_color === undefined) 
+          one_row.bg_color = 'transparent';
+        _this.paint_one_row(i, one_row.bg_color);
 
     } else {
-      
-        var btn      = _this.drill_btn[i];
-        
-        btn.hide();
+        _this.drill_btn[i].hide();
         _this.data[row] = _this.create_init_data(1)[0];
         _this.data[row].empty = true;
       
@@ -2355,105 +2362,8 @@ function _show_drill_data(_this, row_cnt) {
     }
   }
   _this.show_highlight_bar();
-  return _this; };
-  
-
-/**
- * 드릴 다운 기능이 설정되었을 경우 사용되는 data render 펑션
- * 이 펑션은 일반적인 방법으로 호출되지 않으며, data_render 변수에 담겨 호출된다
- * @param _this
- * @param row_cnt
- * @returns {FGR}
- */
-//FGR.prototype.show_drill_data = function(_this, row_cnt){
-function _show_drill_data2(_this, row_cnt) {
-
-  var hidden_row_cnt = 0,
-    i, j, k, row;
-
-  if(_this.highlight_refresh){
-    if(_this.is_IE())
-      _this.div[0][1].focus();  // IE8 인 경우 $(':focus').blur() 를 사용하게 되면 웹 브라우저에 내장된 버그가 발생한다
-    else
-      $(':focus').blur();      // 다른 브라우저인 경우에는 focus - blur 가 잘 작동한다
-  }
-
-  for(i = 0; i < _this.cfg.rows_show; ++i){
-    row = row_cnt + i + hidden_row_cnt;
-
-    // 0. 전처리
-    // drill up 을 통해 화면에 표시할 data 가 부족하다면 빈 값을 넣어준다
-    if(_this.data[row] === undefined){
-      for(k = i; k < _this.rows.length; ++k){
-        _this.data[row] = _this.create_init_data(1)[0];
-        _this.data[row].empty = true;
-      }
-      //break;
-
-    // drill up 을 통해 숨겨진 row 가 존재한다면 화면에 표시하지 않고 지나친다
-    } else if(_this.data[row] && _this.data[row].hide){
-      ++hidden_row_cnt;
-      --i;
-      continue;
-    }
-
-    // 1. render
-    for(j = 0; j < _this.scheme.length; ++j){
-      var val = _this.data[row][j];
-
-      // A. gen_label 처리 : indent, 버튼 텍스트 표시
-      if(_this.scheme[j].type === 'gen_label'){
-
-        var gen      = _this.data[row][_this.get_gen_col()],
-          next_gen = (_this.data[row+1]) ? _this.data[row+1][_this.get_gen_col()] : -1,
-          display  = 'show',
-          indent   = _style.drill_indent * gen;
-
-        if(next_gen <= gen){
-          display  = 'hide';
-          indent  += _style.drill_btn_width;
-        }
-
-        // 가. indent 및 width 사이즈 처리
-        _this.cell[i][j].css('padding-left', indent);
-        _this.cell[i][j].width(_this.scheme[j].width - indent - _style.input_padding);
-
-        // 나. 버튼 처리
-        _this.drill_btn[i][display]()
-          .attr({row: row, gen: gen})
-          .text(_this.data[row].fold ? '+' : '-');
-
-        // 다. 레이블 처리
-        _this.gen_label[i].text(val);
-
-        // 라. 선택된 row 라면 선택 색상을 표시해 준다
-        if(row === _this.row_selected){
-          _this.paint_one_row(i, _style.row_selected);
-
-          try { _this.cell[i][_this.col_selected].focus(); }
-          catch(e) { /*console.log('drill error : ' + i);*/ }
-
-        // 마. 선택된 row 가 아니라면 generation 넘버에 맞춰 색상을 표시해 준다
-        } else {
-          var dr_color = _this.cfg.drill_color[gen];
-          if(gen === '')
-            dr_color = _this.cfg.drill_color[0];
-          else if(dr_color === undefined)
-            dr_color = _this.cfg.drill_color[_this.cfg.drill_color.length - 1];
-          _this.paint_one_row(i, dr_color);
-        }
-
-        //if(_this.data[row].hide)
-          //_this.paint_one_row(i, 'red');
-
-      // B. gen_label 이 아닌 일반 column 은 데이터를 표시해주면 된다
-      } else {
-        _this.cell[i][j].attr('row', row);
-        _this.Cell_value(i,j, val);
-      }
-    } // end of j loop
-  } // end of i loop
-  return _this; };
+  return _this;
+};
 
 /**
  * cell 객체의 데이터 상의 좌표를 구한다
@@ -2461,7 +2371,8 @@ function _show_drill_data2(_this, row_cnt) {
  * @returns {row, col}
  */
 FGR.prototype.get_loc = function(cell){
-  return {row: _toInt(cell.getAttribute('row')), col: _toInt(cell.getAttribute('col'))}; };
+  return {row: _toInt(cell.getAttribute('row')), col: _toInt(cell.getAttribute('col'))};
+};
 
 /** highlight bar 를 표시하고 cursor focused 를 이동한다. */
 FGR.prototype.show_highlight_bar = function(){
