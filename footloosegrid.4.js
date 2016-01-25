@@ -2601,23 +2601,22 @@ function _attatch_evt_paste(_this){
  */
 function _create_calc_row(){
 
-  if( ! this.cfg.calc_row)
-    return this;
+  if( ! this.cfg.calc_row) return this;
 
-  this.scheme.forEach(function(v,i){
-    var div     = (i < this.cfg.fixed_header) ? 'calc_left' : 'calc_right',
-      checked = v.type.match(/check|radio/),
-      attr    = {
-        readonly : true,
-        id       : `${this.get_id()}_calc_cell_${i}`,
-        disabled : checked };
+  this.scheme.forEach((v,i) => {
+    const div  = (i < this.cfg.fixed_header) ? 'calc_left' : 'calc_right';
+    const attr = {
+      readonly : true,
+      id       : `${this.get_id()}_calc_cell_${i}`,
+      disabled : v.type.match(/check|radio/),
+    };
 
     this.calc_cell[i].attr(attr).css('border-left', '1px solid transparent').appendTo(this.div[div]);
 
-    if(checked)
-      this.calc_cell[i].find('input').attr('disabled', true);
-  }, this);
-  return this; };
+    if(attr.disabled) this.calc_cell[i].find('input').attr('disabled', true);
+  });
+  return this;
+};
 
 /**
  * 상단 계산 행에 들어갈 값을 계산한다
@@ -2625,13 +2624,14 @@ function _create_calc_row(){
  */
 FGR.prototype.calc_calc_cell = function(col_index){
 
-  var col = this.scheme[col_index];
-  if(col.calc_row === undefined)
-    return '';
+  const col = this.scheme[col_index];
+
+  if(col.calc_row === undefined) return '';
 
   // col.calc_row 의 값으로는 'sum', 'avg', 'max', 'min' 등, FGR.prototype.calc 에 정의된 값들이 들어간다.
-  var calc_result = this.calc[col.calc_row](this, col_index);
-  return col.calc_title + calc_result; };
+  const calc_result = this.calc[col.calc_row](this, col_index);
+  return col.calc_title + calc_result;
+};
 
 /**
  * 계산 행에서 사용할 function 모음
@@ -2641,16 +2641,14 @@ FGR.prototype.calc_calc_cell = function(col_index){
  * min : 최소값을 계산한다
  */
 FGR.prototype.calc = {
-  sum : function(_this, col_index){
-    var value = _this.data.reduce(function(a,b){ return a + b[col_index]}, 0)
+  sum (_this, col_index) {
+    const value = _this.data.reduce((a,b) => ( a + b[col_index]), 0)
     return _to_comma_format(value);
   },
-  avg : function(_this, col_index){
+  avg (_this, col_index) {
     for(var i = 0, cnt = 0, sum = 0; i < _this.data.length; ++i){
-      var v = _this.data[i][col_index];
-      if(_.isNull(v)){
-        continue;
-      } else {
+      const v = _this.data[i][col_index];
+      if(!_.isNull(v)){
         sum += v;
         ++cnt;
       }
@@ -2658,12 +2656,12 @@ FGR.prototype.calc = {
     return (sum/cnt).toLocaleString('en');
     //return _to_comma_format(sum/cnt);
   },
-  max : function(_this, col_index){
+  max (_this, col_index) {
     var max = Number.MIN_SAFE_INTEGER;
 
     _this.data.forEach(function(v,i){
-      var val = v[col_index];
-      if(val === null || val === undefined)
+      const val = v[col_index];
+      if(val == null)
         return true;
       else if(val > max)
         max = val;
@@ -2675,12 +2673,12 @@ FGR.prototype.calc = {
       return _to_comma_format(max);
     }
   },
-  min : function(_this, col_index){
+  min (_this, col_index) {
     var min = Number.MAX_SAFE_INTEGER;
 
     _this.data.forEach(function(v,i){
-      var val = v[col_index];
-      if(val === null || val === undefined)
+      const val = v[col_index];
+      if(val == null)
         return true;
       else if(min > val)
         min = val;
@@ -2699,7 +2697,7 @@ FGR.prototype.calc = {
  * @returns {FGR}
  */
 FGR.prototype.refresh_calc_cell = function(col_index){
-  var _this = this;
+  const _this = this;
   
   /// 계산 지정된 모든 컬럼을 게산한다.
   if(col_index === undefined) {
@@ -2710,11 +2708,11 @@ FGR.prototype.refresh_calc_cell = function(col_index){
 
   // col_index 로 지정된 컬럼만을 계산한다.
   } else if (_.isNumber(col_index)){
-    var v = _this.scheme[col_index];
-    if(v.calc_row)
+    if(_this.scheme[col_index].calc_row)
       _this.calc_cell[col_index].val(_this.calc_calc_cell(col_index));
   }
-  return this; };
+  return this;
+};
 
 /**
  * 스크롤 바의 너비(width) 를 구한다
@@ -2722,15 +2720,16 @@ FGR.prototype.refresh_calc_cell = function(col_index){
  * @link http://chris-spittles.co.uk/jquery-calculate-scrollbar-width/
  */
 FGR.prototype.get_scroll_bar_width = function() {
-  var div_inner = $('<div>', {html: 'scroll test', style: 'width:100%;height:200px;'}),
-    div_outer = $('<div>', {style:'width:200px;height:150px;position:absolute;top:0;left:0;visibility:hidden;overflow:hidden;'}).append(div_inner);
+  const div_inner = $('<div>', {html: 'scroll test', style: 'width:100%;height:200px;'});
+  const div_outer = $('<div>', {style:'width:200px;height:150px;position:absolute;top:0;left:0;visibility:hidden;overflow:hidden;'}).append(div_inner);
 
   $('body').append(div_outer);
-  var width1 = div_inner[0].offsetWidth;
+  const width1 = div_inner[0].offsetWidth;
   div_outer.css('overflow', 'scroll');
-  var width2 = div_outer[0].clientWidth;
+  const width2 = div_outer[0].clientWidth;
   div_outer.remove();
-  return width1 - width2; };
+  return width1 - width2;
+};
 
 /**
  * row_label 과 data_table 에 row 를 추가한다
@@ -2744,30 +2743,20 @@ FGR.prototype.get_scroll_bar_width = function() {
  * @returns {FGR}
  */
 FGR.prototype.Add_row = function(number, row_index){
+  
+  const num      = (number === undefined) ? 1 : number;
+  const valid_in = _is_number(row_index);
+  const arr_head = valid_in ? this.data.slice(0, row_index) : this.data;
+  const arr_add  = this.create_init_data(num);
+  const arr_tail = valid_in ? this.data.slice(row_index)    : [];
 
-  var _this    = this,
-    end_arr  = [],
-    temp_arr = this.data;
+  this.data = arr_head.concat(arr_add, arr_tail);
 
-  if(number === undefined)
-    number = 1;
-
-  if(_is_number(row_index)){
-    temp_arr = this.data.slice(0, row_index);
-    end_arr  = this.data.slice(row_index);
-  }
-
-  for(var i = 0; i < number; ++i){
-    for (var j = 0, row = []; j < this.scheme.length; j++)
-      row[j] = null;
-    temp_arr.push(row);
-  }
-
-  this.data = temp_arr.concat(end_arr);
-  this.data.forEach(function(row, i){ row.index = i; });  // indexing
+  this.data.forEach(function(row, i){ row.index = i; });  // indexing for filter
   _adjust_scroll_v(this, this.data.length);
-  this.render_data(this, this.current_top_line);
-  return this; };
+  this.refresh();
+  return this;
+};
 
 /**
  * 데이터 로드
