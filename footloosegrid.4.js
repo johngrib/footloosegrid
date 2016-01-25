@@ -3262,31 +3262,26 @@ function _create_resizer() {
  */
 FGR.prototype.scroll_row = function(move){
   
-  if(this.row_selected >= this.data.length)
+  if(! _.isNumber(move) || this.row_selected >= this.data.length)
     return this;
   
-  var _this      = this,
-    drill_mode = (this.hidden_row_cnt > 0 && this.get_gen_col() >= 0),
-    before_row = drill_mode ? this.data[this.current_top_line].index : this.current_top_line,
-    row_cnt    = before_row + move;
+  const row_cnt = (() => {
+    const cnt = this.current_top_line + move;
 
-  if( ! _.isNumber(row_cnt) || row_cnt < 0)
-    row_cnt = 0;
-  else if(row_cnt > this.data.length - this.cfg.rows_show - this.hidden_row_cnt)
-    row_cnt = (this.data.length - this.cfg.rows_show - this.hidden_row_cnt);
+    if(cnt < 0) return 0;
+    
+    const remain_cnt = this.data.length - this.cfg.rows_show;
 
-  if(drill_mode) {
-    for (var i = 0; i < _this.data.length; i++) {
-      if(_this.data[i].index === row_cnt){
-        row_cnt = i;
-        break; } } }
+    return (cnt > remain_cnt) ? remain_cnt : cnt;
+  })();
 
   this.scroll_mode      = false;  // scroll 이벤트 중복 방지
   this.current_top_line = row_cnt;
   this.render_data(this, row_cnt);
   this.div.scroll_v.scrollTop(this.cfg.row_height * row_cnt);  // scroll
 
-  return this; };
+  return this;
+};
 
 /**
  * 하나의 cell 에 대하여 editable 속성을 정의해 준다
@@ -3302,7 +3297,8 @@ FGR.prototype.set_cell_editable = function(row, col, edit){
   if( ! this.data[row].editable)
     this.data[row].editable = {};
   this.data[row].editable[col] = edit;
-  return this; };
+  return this;
+};
 
 /**
  * 해당 셀의 edit 속성을 검사한다
@@ -3315,8 +3311,9 @@ FGR.prototype.is_editable_cell = function(row, col){
     return false;
   if(this.data[row] === undefined)
     return true;
-  var editable = this.data[row].editable;
-  return (editable === undefined || editable[col] === undefined) ? this.scheme[col].edit : editable[col]; };
+  const editable = this.data[row].editable;
+  return (editable === undefined || editable[col] === undefined) ? this.scheme[col].edit : editable[col];
+};
 
 /**
  * 그리드 전체를 disabled 할 수 있다
@@ -3341,7 +3338,8 @@ FGR.prototype.disable = function(disable, opacity, color, z){
   if(color !== undefined) this.div.cover.css('background-color', color);
   if(z     !== undefined) this.div.cover.css('z-index', z);
 
-  return this; };
+  return this;
+};
 
 /**
  * 개별 row 의 background-color 를 정의한다
@@ -3352,7 +3350,8 @@ FGR.prototype.disable = function(disable, opacity, color, z){
 FGR.prototype.set_row_color = function(row, color){
   if(this.data[row] !== undefined)
     this.data[row].bg_color = color;
-  return this; };
+  return this;
+};
 
 /**
  * column header 에 필터 아이콘을 입력한다
@@ -3360,30 +3359,20 @@ FGR.prototype.set_row_color = function(row, color){
  */
 function _create_filter_icon(){
 
+  const _this     = this;
   this.div.filter = _create_filter_div.call(this);
 
-  var _this    = this,
-    f_toggle = function(e){
-      if( ! _this.cfg.use_filter_div){
-        _this.div.filter.hide();
-        return; }
+  function f_toggle (e){
+    if( ! _this.cfg.use_filter_div || _this.div.filter.is(':visible'))
+      return _this.div.filter.hide();
 
-      // show/hide toggle
-      if(_this.div.filter.is(':visible')){
-        _this.div.filter.hide();
-        return; }
+    _this.div.filter.slideDown();
+  }
 
-      var col  = _toInt($(e.target).attr('col')),
-        left = (col < _this.cfg.fixed_header) ? _this.scheme[col].left
-          : (_this.cfg.left_width + _this.scheme[col].left + 2);
-
-      _this.div.filter.slideDown();
-    };
-  
-  this.scheme.forEach(function(column, i){
-    var div    = (i < this.cfg.fixed_header) ? this.div.top_corner : this.div.col_label,
-      header = div.find(`div[col=${i}]`),
-      attr   = {'class': _style.filter_btn, col: i};
+  this.scheme.forEach((column, col) => {
+    const div    = (col < this.cfg.fixed_header) ? this.div.top_corner : this.div.col_label;
+    const header = div.find(`div[col=${col}]`);
+    const attr   = { 'class': _style.filter_btn, col};
 
     if( ! /&checkbox|&radio/.test(column.label))
       header.css('cursor', 'pointer')
@@ -3391,9 +3380,10 @@ function _create_filter_icon(){
 
     // 각 header title 에 filter icon 을 부착한다.
     column.filter_icon = $('<div>', attr).appendTo(header.last());
-  }, this);
+  });
 
-  return this; };
+  return this;
+};
 
 /**
  * filter 시 사용할 펑션들
