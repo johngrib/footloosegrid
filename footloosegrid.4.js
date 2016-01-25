@@ -3076,13 +3076,8 @@ function _re_size_header(_this, cells){
  */
 FGR.prototype.save_ajax_json = function(url, parameters, callback, filter){
 
-  if(callback === undefined)
-    callback = function(){};
-  if(parameters === undefined)
-    parameters = {};
-
   var send_data = [],
-    row, params, data;
+    row, data;
 
   for(var i = 0; i < this.data.length; ++i){
     if(filter && ! filter(this.data[i], i))
@@ -3095,9 +3090,9 @@ FGR.prototype.save_ajax_json = function(url, parameters, callback, filter){
     send_data.push(row);
   }
 
-  params = {
-    data : send_data,
-    params: parameters
+  const params = {
+    data  : send_data,
+    params: parameters || {}
   };
 
   data = JSON.stringify(params);
@@ -3109,7 +3104,7 @@ FGR.prototype.save_ajax_json = function(url, parameters, callback, filter){
     contentType : 'application/json',
     type        : 'POST',
     async       : true,
-    success     : callback
+    success     : callback || function(){},
   });
 };
 
@@ -3124,12 +3119,9 @@ FGR.prototype.save_ajax_json = function(url, parameters, callback, filter){
  */
 FGR.prototype.send_ajax_request = function(url, parameters, callback){
 
-  if(callback === undefined)
-    callback = function(){};
-  if(parameters === undefined)
-    parameters = {};
-
-  var params = { params: parameters };
+  const params = { 
+      params: parameters || {},
+  };
 
   $.ajax({
     url         : url,
@@ -3138,25 +3130,10 @@ FGR.prototype.send_ajax_request = function(url, parameters, callback){
     contentType : 'application/json',
     type        : 'POST',
     async       : true,
-    success     : callback
+    success     : callback || function(){},
   });
-  return this; };
-
-/**
- * FIXME : 제거할 펑션
- * 컬럼의 모든 셀에 클릭 이벤트를 부여한다.
- * @param column_index
- * @param event_func
- * @returns {FGR}
- *
- * ex)
- * 다음과 같이 하면 셀을 클릭했을 때 해당 셀의 값을 alert 으로 띄운다.
- * f.column_click_event(2, function(){ alert( $(this).val() ); });
- */
-FGR.prototype.column_click_event = function(column_index, event_func){
-  for(var i = 0; i < this.cell.length; ++i)
-    this.cell[i][column_index].click(event_func);
-  return this; };
+  return this;
+};
 
 /**
  * 다음은 사용자 정의 이벤트 부여 펑션들이다.
@@ -3204,11 +3181,13 @@ FGR.prototype.column_click_event = function(column_index, event_func){
 function _attatch_evt(event_arr, event_func){
   if(_.isFunction(event_func)){
     event_arr.push(event_func);
-    return true; }
-  return false; };
-FGR.prototype.attatch_click_event = function(event_func){ return _attatch_evt(this.click_event, event_func); };
-FGR.prototype.attatch_change_event = function(event_func){ return _attatch_evt(this.change_event, event_func); };
-FGR.prototype.attatch_focusin_event = function(event_func){ return _attatch_evt(this.focusin_event, event_func); };
+    return true;
+  }
+  return false;
+};
+FGR.prototype.attatch_click_event    = function(event_func){ return _attatch_evt(this.click_event,    event_func); };
+FGR.prototype.attatch_change_event   = function(event_func){ return _attatch_evt(this.change_event,   event_func); };
+FGR.prototype.attatch_focusin_event  = function(event_func){ return _attatch_evt(this.focusin_event,  event_func); };
 FGR.prototype.attatch_focusout_event = function(event_func){ return _attatch_evt(this.focusout_event, event_func); };
 
 /**
@@ -3218,61 +3197,63 @@ FGR.prototype.clear = function(){
   this.data = this.create_init_data();
   this.data.forEach(function(row, i){ row.index = i; });  // indexing
   this.refresh();
-  return this; };
+  return this;
+};
 
 /**
  * header cell 에 resize 기능을 입력한다
  * @dependent_on jquery-ui
  * @special_thanks : 이영서
  */
-function _create_resizer(){
+function _create_resizer() {
 
-  var _this     = this,
-    stop_func = function(e, ui){ _this.col_resize(0, _this.scheme[0].width); },
-    resizer_css, resize_func;
-
-  resizer_css = {
+  const _this       = this;
+  const resizer_css = {
     position : 'absolute',
     right    : 0,
-    'z-index': 0  // datepicker 의 z-index 가 1 이기 때문에 달력 위로 나타날 가능성을 제거해 준다
+    'z-index': 0,  // datepicker 의 z-index 가 1 이기 때문에 달력 위로 나타날 가능성을 제거해 준다
   };
 
-  resize_func = function(e, ui){
-    var col = _toInt($(this).attr('col'));
+  function stop_func (e, ui) {
+    _this.col_resize(0, _this.scheme[0].width);
+  }
+
+  function resize_func (e, ui) {
+    const col = _toInt($(this).attr('col'));
     _this.col_resize(col, ui.size.width);
-    if(_this.get_gen_col() >= 0)
-      _this.refresh();
-  };
-  
-  this.scheme.forEach(function(column, i){
-    
-    if( ! column.resize)
-      return true;
 
-    var cfg     = column.resize,
-      div     = (i < this.cfg.fixed_header) ? this.div.top_corner : this.div.col_label,
-      header  = div.find(`div[col=${i}]`).last(),
-      options = {
+    if(_this.get_gen_col() >= 0) _this.refresh();
+  }
+  
+  this.scheme.forEach((column, i) => {
+    
+    if( ! column.resize) return true;
+
+    const cfg     = column.resize;
+    const div     = (i < this.cfg.fixed_header) ? this.div.top_corner : this.div.col_label;
+    const header  = div.find(`div[col=${i}]`).last();
+    const options = {
         maxHeight: header.height(),
         minHeight: header.height(),
         maxWidth : cfg.max || undefined,
         minWidth : cfg.min || 20,
         handles  : 'se',
         stop     : stop_func,
-        resize   : resize_func
-      };
+        resize   : resize_func,
+    };
     
     resizer_css.top = header.height() - this.cfg.resize_icon_size;
 
-    if(header.resizable)
-      header.resizable(options);  // resizable function 이 존재한다면 resize 아이콘을 생성한다
+    // resizable function 이 존재한다면 resize 아이콘을 생성한다
+    if(header.resizable) header.resizable(options);
 
     header.css('position', 'absolute');
     this.resize_btn[i] = header.find('.ui-resizable-handle')
       .attr('title', _msg.header_resize)
       .css(resizer_css);
-  }, this);
-  return this; };
+  });
+  return this;
+};
 
 /**
  * row 스크롤을 담당하는 펑션
