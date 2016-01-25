@@ -3381,29 +3381,28 @@ function _create_filter_icon(){
     // 각 header title 에 filter icon 을 부착한다.
     column.filter_icon = $('<div>', attr).appendTo(header.last());
   });
-
   return this;
 };
 
 /**
  * filter 시 사용할 펑션들
  */
-var _filter_functions = {
+const _filter_functions = {
   // d : 필터링 할 데이터, v : 사용자가 입력한 비교 값
 
   // string, number filter functions
-  equal       : function(d,v){ return (d) === v; },
-  not_equal   : function(d,v){ return (d) !== v; },
-  begins_with : function(d,v){ return (d).toString().startsWith(v);   },
-  ends_with   : function(d,v){ return (d).toString().endsWith(v);     },
-  contains    : function(d,v){ return (d).toString().indexOf(v) >= 0; },
-  not_contain : function(d,v){ return (d).toString().indexof(v) <  0; },
+  equal       : (d,v) => (d === v),
+  not_equal   : (d,v) => (d !== v),
+  begins_with : (d,v) => String(d).startsWith(v),
+  ends_with   : (d,v) => String(d).endsWith(v),
+  contains    : (d,v) => (String(d).indexOf(v) >= 0),
+  not_contain : (d,v) => (String(d).indexof(v) <  0),
 
   // number filter functions
-  less_than     : function(d,v){ return d < v;  },
-  greater_than  : function(d,v){ return d > v;  },
-  less_equal    : function(d,v){ return d <= v; },
-  greater_equal : function(d,v){ return d >= v; }
+  less_than     : (d,v) => (d < v),
+  greater_than  : (d,v) => (d > v),
+  less_equal    : (d,v) => (d <= v),
+  greater_equal : (d,v) => (d >= v),
 
   // check filter functions
   //is_true_check  : function (d,v){return d !== null && d !== undefined && d > 0;},
@@ -3417,19 +3416,20 @@ var _filter_functions = {
  */
 function _create_filter_column_select(_this, attribute){
 
-  var selector = $('<select>', attribute);
+  const selector = $('<select>', attribute);
 
-  _this.scheme.forEach(function(column, i){
+  _this.scheme.forEach((column, i) => {
     // column 의 width 가 2 이하라면 ( 숨겨진 상태라면 ) 필터링 대상에서 제외한다
     if(column.width > 2){
-      var label = column.label
+      const label = column.label
         .replace(/\&checkbox|&radio/g, '')
         .replace(/\|\|/g, ',')
         .replace(/^,|,$/g, '');
       $('<option>', {text: label, value: i, type: column.type}).appendTo(selector);
     }
-  }, _this);
-  return selector; };
+  });
+  return selector;
+};
 
 /**
  * filter div 의 상단부 정렬 영역을 생성한다.
@@ -3446,49 +3446,48 @@ function _create_filter_column_select(_this, attribute){
  */
 function _create_filter_sort_div(_this){
 
-  var check_attr  = { 'class': _style.filter_check, type:'checkbox' },
-    sort_area   = $('<div>',  {'class': _style.filter_sort_div, style: 'padding-left: 78px;'}),
-    sort_title  = $('<label>',{'class': _style.filter_sort_title}).appendTo(sort_area),
-    sort_div    = $('<div>').appendTo(sort_area),
-    select_attr, s_select, click_sort, click_plus_minus;
+  const sort_area  = $('<div>',  {'class': _style.filter_sort_div, style: 'padding-left: 78px;'});
+  const sort_title = $('<label>',{'class': _style.filter_sort_title});
+  const sort_div   = $('<div>');
+  
+  sort_area.append(sort_title, sort_div);
 
-  select_attr = {
+  const select_attr = {
     'class': _style.filter_check, type: 'sort',
     func   : 'column',
     name   : `${_this.get_id()}_filter_sort_column`,
   };
-
-  s_select    = _create_filter_column_select(_this, select_attr).appendTo(sort_div);
+  const s_select = _create_filter_column_select(_this, select_attr).appendTo(sort_div);
 
   // 체크박스 클릭 이벤트 펑션
-  click_sort = function(){
-    var $this = $(this);
-    if( ! $this.prop('checked'))
-      return;
+  function click_sort () {
+    const $this = $(this);
+    if( ! $this.prop('checked')) return;
     $this.closest('div').find('input[type=checkbox]').prop('checked', false);
     $this.prop('checked', true);
   };
 
   // 체크박스 생성
-  ['sort_asc', 'sort_desc'].forEach(function(v){
+  const check_attr = { 'class': _style.filter_check, type:'checkbox' };
+  ;['sort_asc', 'sort_desc'].forEach(function(v){
     check_attr.order = v;
-    var checkbox = $('<input>', check_attr).change(click_sort);
+    const checkbox  = $('<input>', check_attr).change(click_sort);
     $('<label>', check_attr).append(checkbox, _msg[v])
       .appendTo(sort_div);
   });
 
   // +, - 버튼 클릭 이벤트 펑션
-  click_plus_minus = function(){
-    var $this      = $(this),
-      parent_div = $this.closest('div');
+  function click_plus_minus () {
+    const $this      = $(this);
+    const parent_div = $this.closest('div');
 
-    // + 버튼을 클릭하면 정렬 정보 입력 div 를 추가한다
     if('plus' === $this.attr('func')){
-      var s_div = parent_div.clone(true, true);
+      // + 버튼을 클릭하면 정렬 정보 입력 div 를 추가한다
+      const s_div = parent_div.clone(true, true);
       s_div.find('button').css('visibility', '');
       s_div.insertAfter(parent_div);
-    // - 버튼을 클릭하면 정렬 정보 입력 div 를 제거한다
     } else {
+      // - 버튼을 클릭하면 정렬 정보 입력 div 를 제거한다
       parent_div.remove();
     }
   };
@@ -3498,10 +3497,10 @@ function _create_filter_sort_div(_this){
   $('<button>', {'class': _style.filter_minus_btn, func: 'minus'}).click(click_plus_minus).appendTo(sort_div)
     .css('visibility', 'hidden');
 
-  if( ! _this.cfg.use_sort_panel)
-    sort_area.hide();
+  if( ! _this.cfg.use_sort_panel) sort_area.hide();
 
-  return sort_area; };
+  return sort_area;
+};
 
 /**
  * filter div 의 중단부 필터 조건 영역을 생성한다.
@@ -3517,6 +3516,7 @@ function _create_filter_sort_div(_this){
  * @returns
  */
 function _create_filter_condition_div(_this){
+  // 작업중
 
   var _m         = _msg,
     _id        = _this.get_id(),
