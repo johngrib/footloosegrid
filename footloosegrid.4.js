@@ -2379,30 +2379,25 @@ FGR.prototype.show_highlight_bar = function(){
 
   if( ! this.highlight_refresh){
     this.highlight_refresh = true;
-    return this; }
-
-  if(this.highlight_row < 0)
     return this;
+  }
 
-  var editable;
+  if(this.highlight_row < 0) return this;
 
-  //this.paint_one_row(this.highlight_row, this.before_highlight_color);  // 이전에 선택되었던 row 의 배경색을 복구한다
-
-  if(this.pre_cell)
-    this.pre_cell.attr('disabled', false);
+  if(this.pre_cell) this.pre_cell.attr('disabled', false);
 
   if(this.row_selected >= this.current_top_line && this.row_selected < this.current_top_line + this.rows.length){
+      // selected row 가 화면 내에 있다면
 
-    editable = this.is_editable_cell(this.row_selected, this.col_selected);
+      const editable = this.is_editable_cell(this.row_selected, this.col_selected);
 
-    this.highlight_row = this.row_selected - this.current_top_line;
-    this.paint_one_row(this.highlight_row, _style.row_selected);
-    
-    if(this.col_selected && ! editable)
-      this.pre_cell = this.cell[this.highlight_row][this.col_selected].attr('disabled', true);
-    else if(this.col_selected && editable) 
-      this.cell[this.highlight_row][this.col_selected].focus();
-
+      this.highlight_row = this.row_selected - this.current_top_line;
+      this.paint_one_row(this.highlight_row, _style.row_selected);
+      
+      if(this.col_selected && ! editable)
+        this.pre_cell = this.cell[this.highlight_row][this.col_selected].attr('disabled', true);
+      else if(this.col_selected && editable) 
+        this.cell[this.highlight_row][this.col_selected].focus();
   } else {
     // IE8 인 경우 $(':focus').blur() 를 사용하게 되면 IE8 자체 버그가 발생한다
     if(this.is_IE())
@@ -2410,7 +2405,8 @@ FGR.prototype.show_highlight_bar = function(){
     else
       $(':focus').blur();
   }
-  return this; };
+  return this;
+};
 
 /**
  * 하나의 row 를 색칠한다
@@ -2421,7 +2417,8 @@ FGR.prototype.show_highlight_bar = function(){
 FGR.prototype.paint_one_row = function(index, color){
   for (var i = 0; i < 2; i++)
     this.rows[index][i].css('background-color', color);
-  return this; };
+  return this;
+};
 
 /**
  * 하나의 row 를 숨긴다
@@ -2432,7 +2429,8 @@ FGR.prototype.paint_one_row = function(index, color){
 FGR.prototype.hide_one_row = function(index, is_hide){
   for (var i = 0; i < 2; i++)
     this.rows[index][i][is_hide ? 'hide' : 'show']();
-  return this; };
+  return this;
+};
 
 /**
  * 수직 스크롤의 길이를 조절한다
@@ -2441,35 +2439,35 @@ FGR.prototype.hide_one_row = function(index, is_hide){
  */
 function _adjust_scroll_v(_this, row_count){
 
-  var scroll = (_this.data.length > _this.cfg.rows_show) ? 'scroll' : 'hidden',
-    cnt, scroll_height;
+  const scroll = (_this.data.length > _this.cfg.rows_show) ? 'scroll' : 'hidden';
+  const cnt = (() => {
+    if(row_count === 'visible')
+      return _this.div.data_table.find(`.${_style.row}:visible`).length;
+    else if(_.isNumber(row_count))
+      return row_count;
+  })();
 
-  if(row_count === 'visible')
-    cnt = _this.div.data_table.find(`.${_style.row}:visible`).length;
-  else if(_.isNumber(row_count))
-    cnt = row_count;
-
-  cnt -= _this.hidden_row_cnt;
-
-  scroll_height = cnt * _this.cfg.row_height;
+  const scroll_height = cnt * _this.cfg.row_height;
   _this.scroll_v_inner.height(scroll_height);
   _this.div.scroll_v.css('overflow-y', scroll);
 
-  return _this; };
+  return _this;
+};
 
 /**
  * row_label 과 data_table 의 홀수행과 짝수행의 배경색을 다르게 칠한다
  * @param _this
  */
 FGR.prototype.paint_rows = function(_this){
-  var paint = function(query, color){
+  function paint (query, color) {
     for(var i = 0; i<2; ++i)
       _this.div[2][i].find('.' + _style.row + query).css('background-color',color);
   };
 
   paint(':odd', _style.row_color_odd);
   paint(':even', _style.row_color_even);
-  return this; };
+  return this;
+};
 
 /**
  * 포커스 위치를 상/하 방향으로 움직인다. 움직이는 단위는 1 row, 또는 1 page
@@ -2481,12 +2479,10 @@ function _move_focus(e, _this) {
   // 고의로 움직임에 딜레이를 준다. 키를 계속 누르고 있을 경우, 
   // IE 처럼 처리 느린 웹 브라우저의 스크롤링 속도는 큰 변화가 없지만,
   // chrome 처럼 빠른 웹 브라우저에서는 너무 빨라서 잔상 비슷한 효과가 난다.
-  if(_this.move_delay){
-    return false;
-  } else {
-    _this.move_delay = true;
-    setTimeout(function(){ _this.move_delay = false;}, _this.scroll_delay_ms);
-  }
+  if(_this.move_delay) return false;
+
+  _this.move_delay = true;
+  setTimeout(function(){ _this.move_delay = false;}, _this.scroll_delay_ms);
 
   if(e.keyCode === 13) e.preventDefault();
 
@@ -2502,31 +2498,29 @@ function _move_focus(e, _this) {
   // keys 에 정의된 키 코드가 아니라면 return
   if( ! keys.hasOwnProperty(e.keyCode)) return false;
 
-  const loc = _this.get_loc(e.target);
-  const row = loc.row;
-  const col = loc.col;
-  const row_cnt = keys[e.keyCode];  // 입력한 키에 따라 스크롤 할 row 의 수를 가져온다.
+  const loc      = _this.get_loc(e.target);
+  const row      = loc.row;
+  const row_cnt  = keys[e.keyCode];  // 입력한 키에 따라 스크롤 할 row 의 수를 가져온다.
   const this_row = row - _this.current_top_line;
   const check    = {'-1': this_row === 0, 1: this_row >= _this.rows.length - 1};
 
   // 1. ↑, ↓ 입력이 들어온 경우
   if(check.hasOwnProperty(row_cnt)){
 
-    // A. 현재 커서 위치가 최상단, 최하단이라면
-    if(check[row_cnt]){
-      _this.row_selected = row + row_cnt;
-      if(_this.row_selected < 0)
-        _this.row_selected = 0;
+      // A. 현재 커서 위치가 최상단, 최하단이라면
+      if(check[row_cnt]){
+        _this.row_selected = row + row_cnt;
 
-      _this.scroll_row(row_cnt);
+        if(_this.row_selected < 0) _this.row_selected = 0;
 
-    // B. 현재 커서 위치가 최상단, 최하단이 아니라면
-    } else {
-      const next_row = _this.cell[this_row + row_cnt];
+        _this.scroll_row(row_cnt);
 
-      if(next_row)
-        next_row[col].mousedown().focus();
-    }
+      // B. 현재 커서 위치가 최상단, 최하단이 아니라면
+      } else {
+        const next_row = _this.cell[this_row + row_cnt];
+
+        if(next_row) next_row[loc.col].mousedown().focus();
+      }
 
   // 2. pgup, pgdn 입력이 들어온 경우
   } else {
