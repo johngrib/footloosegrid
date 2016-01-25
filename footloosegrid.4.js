@@ -2541,24 +2541,23 @@ function _move_focus(e, _this) {
 function _attatch_evt_paste(_this){
 
   // https://stackoverflow.com/questions/2176861/javascript-get-clipboard-data-on-paste-event-cross-browser
-  var get_clipboard_text = function get_clipboard_text(e) {
+  function get_clipboard_text (e) {
     if(window.clipboardData)
       return window.clipboardData.getData('text'); // #forInternetExplorer
     return (e.originalEvent || e).clipboardData.getData('text/plain');
   }
 
-  var paste = function paste(e){
+  function paste (e) {
 
     e.preventDefault();
-
-    var $cell = $(e.target),
-      row  = _toInt($cell.attr('row')),
-      col  = _toInt($cell.attr('col'));
     
-    var indexing = function(v, i) {
-      //return v.split('\t').map(  (vv, j) => ({row: row + i, col: col + j, txt: vv })  ); 
-      return v.split('\t').map( function(vv, j) { return ({row: row + i, col: col + j, txt: vv }); }); // #forInternetExplorer
+    function indexing (v, i) {
+      return v.split('\t').map( (vv, j) => ({row: row + i, col: col + j, txt: vv }) ); 
     };
+
+    const $cell = $(e.target);
+    const row   = _toInt($cell.attr('row'));
+    const col   = _toInt($cell.attr('col'));
 
     $cell.val(null);
 
@@ -2572,32 +2571,23 @@ function _attatch_evt_paste(_this){
         line.forEach(insert_one_row);
         return true;
       });
-    
     _this.refresh();  // 화면을 갱신해 보여준다.
     return;
-  };
+  } // end of function paste
 
-  var isEmpty = (function(){
-    var reg = /^\s*$/;
-    return function(str){ 
-      return reg.test(str); 
-    };
+  const isEmpty = (function(){
+    const reg = /^\s*$/;
+    return (str) => reg.test(str); 
   })();
 
-  var insert_one_row = function(dt) {
-
+  function insert_one_row (dt) {
     // 존재하지 않는 컬럼이라면 pass
     if(! _this.scheme[dt.col]) return true;
-
     // editable 셀이 아니라면 pass
     if( ! _this.is_editable_cell(dt.row, dt.col)) return true;
 
-    var data_push = _this.scheme[dt.col].data_push,
-      value       = data_push(undefined, dt, dt.txt),
-      data_row    = _this.data[dt.row];
-
-    data_row[dt.col] = value;  // this.data 에 값을 입력한다.
-  };
+    _this.data[dt.row][dt.col] = _this.scheme[dt.col].data_push(undefined, dt, dt.txt);  // this.data 에 값을 입력한다.
+  }
 
   for(var i = 0; i < 2; ++i)
     _this.div[2][i].bind('paste', paste);
