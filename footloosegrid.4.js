@@ -1953,7 +1953,7 @@ function _create_buttons(_this){
 
     if(_this.data.length < _this.rows.length){
       const last       = _this.rows.length - _this.data.length;
-      const empty_rows = _this.create_init_data(last);
+      const empty_rows = _this.create_init_data(last).map((row) => { row.empty = true; return row; });
       _this.data = _this.data.concat(empty_rows);
     }
     
