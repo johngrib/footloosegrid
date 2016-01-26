@@ -3614,28 +3614,25 @@ function _create_filter_condition_div(_this){
  * @returns {FGR}
  */
 FGR.prototype.clear_filter_condition = function(_this) {
+  const that = _this || this;
 
-  if(_this === undefined)
-    _this = this;
+  that.div.filter.find('.' + _style.filter_minus_btn).each(function(){
+      const $this = $(this);
+      if($this.css('visibility') !== 'hidden') $this.click();
+  });
 
-  _this.div.filter.find('.' + _style.filter_minus_btn)
-     .each(function(){
-      var $this = $(this);
-      if($this.css('visibility') !== 'hidden')
-         $this.click();
-     });
-
-  _this.div.filter.find('input[type=checkbox]').prop('checked', false);
+  that.div.filter.find('input[type=checkbox]').prop('checked', false);
   
-  var filter_div = _this.div.filter.find('.' + _style.filter_sort_div);
+  const filter_div = that.div.filter.find('.' + _style.filter_sort_div);
 
   filter_div.find('select').each(function(){
-    var $this = $(this),
-      value = $this.find('option').first().val();
+    const $this = $(this);
+    const value = $this.find('option').first().val();
     $this.val(value).change();
   });
   filter_div.find('input').val('');
-  return this; };
+  return this;
+};
 
 /**
  * filter 설정용 div 를 생성한다
@@ -3643,123 +3640,110 @@ FGR.prototype.clear_filter_condition = function(_this) {
  * @returns
  */
 function _create_filter_div(){
-
-  var _this    = this,
-    control  = {},
-    filter   = [],
-    word_map = { id: this.get_id()},
-    div_attr = {
-      'id'   : `${this.get_id()}_filter_div`,
-      'class': _style.filter_div },
-    div      = $('<div>', div_attr).appendTo(this.div.main),
-    f_column = _create_filter_column_select(this, { func: 'column', type: 'sort' });
-
-  _create_filter_sort_div(this).appendTo(div);       // 정렬 설정 입력칸을 생성한다
-  _create_filter_condition_div(this).appendTo(div);  // 필터 설정 입력칸을생성한다
-
-  // control buttons
-  [ {name: 'run',   func: function(){ _this.run_filter(_this); }},
-    {name: 'clear', func: function(){ _this.clear_filter_condition(_this);} },
-    {name: 'close', func: function(){ div.hide();} }
-  ].forEach(function(v){
-    var control_attr = {
-      'text' : _msg['filter_' + v.name],
-      'class': _style.filter_inner_btn
-    };
-    control[v.name] = $('<button>', control_attr).click(v.func).appendTo(div);
-  }, this);
-
+  const _this = this;
+  const attr  = {
+      div   : { 'id': `${this.get_id()}_filter_div`, 'class': _style.filter_div },
+      run   : { 'text' : _msg.filter_run,   'class': _style.filter_inner_btn },
+      clear : { 'text' : _msg.filter_clear, 'class': _style.filter_inner_btn },
+      close : { 'text' : _msg.filter_close, 'class': _style.filter_inner_btn },
+  };
+  const div          = $('<div>', attr.div);
+    const sort_div   = _create_filter_sort_div(this);       // 정렬 설정 입력칸을 생성한다
+    const filter_div = _create_filter_condition_div(this);  // 필터 설정 입력칸을생성한다
+    const btn_run    = $('<button>', attr.run).click(  () => _this.run_filter(_this)  );
+    const btn_clear  = $('<button>', attr.clear).click(  () => _this.clear_filter_condition(_this)  );
+    const btn_close  = $('<button>', attr.close).click(  () => div.hide()  );
+  
+  // assemble
+  this.div.main.append(div);
+  div.append(sort_div, filter_div, btn_run, btn_clear, btn_close);
   div.draggable({ containment: "parent" });
-  return div; };
+
+  return div;
+};
 
 /**
  * filter div 에서 '적용' 버튼을 입력하면 호출되는 필터링 펑션
  */
 FGR.prototype.run_filter = function(_this){
 
-  var word_map         = { id : _this.get_id() },
-    post_filter_data = [],                               // 필터링 결과를 담을 배열을 선언한다
-    functions        = _this.collect_filter_functions(), // 필터링 조건을 참고하여 연산자별 필터링 펑션을 수집한다
-    is_matched_data, sort_filtered_data;
+  const functions = _this.collect_filter_functions(); // 필터링 조건을 참고하여 연산자별 필터링 펑션을 수집한다
 
   // # target_row 가 필터링 조건에 맞는지 검사하는 펑션
-  is_matched_data = function(target_row){
-    var d_validate;
-    loopJ : for(var j = 0; j < functions.length; ++j){
-      d_validate = false;
-      var _and;
-      loopK : for(var k = 0; k < functions[j].length; ++k){
-        var _filter= functions[j][k];
-        if(_filter.func === undefined) continue loopK;
-        _and = _filter.func(target_row[_filter.col], _filter.value);
-        if( ! _and) break loopK;
+  function is_matched_data (target_row) {
+      var d_validate;
+      loopJ : for(var j = 0; j < functions.length; ++j){
+        d_validate = false;
+        var _and;
+        loopK : for(var k = 0; k < functions[j].length; ++k){
+          var _filter= functions[j][k];
+          if(_filter.func === undefined) continue loopK;
+          _and = _filter.func(target_row[_filter.col], _filter.value);
+          if( ! _and) break loopK;
+        }
+        if(_and){
+          d_validate = true;
+          break loopJ;
+        }
       }
-      if(_and){
-        d_validate = true;
-        break loopJ;
-      }
-    }
-    return d_validate;
+      return d_validate;
   }; // #
 
   // ## 필터링된 데이터를 정렬한다
-  sort_filtered_data = function(_this){
-    var s_div      = _this.div.filter.find('._fg_filter_sort_div'),
-      $columns   = s_div.find(`select[name=${_this.get_id()}_filter_sort_column]`),
-      check_asc  = s_div.find('input[order=sort_asc]'),
-      check_desc = s_div.find('input[order=sort_desc]'),
-      sort_driver= [],  // 정렬시 이용할 자료의 배열
-      sort_f;
-    
-    $columns.each(function(i){
-      var col         = _toInt($columns.eq(i).val()),
-        order_asc   = check_asc.eq(i).prop('checked'),
-        order_desc  = check_desc.eq(i).prop('checked'),
-        is_number   = _this.scheme[col].type === 'number',
-        not_checked = !order_asc && !order_desc;
+  function sort_filtered_data (_this) {
+      const s_div       = _this.div.filter.find('._fg_filter_sort_div');
+      const $columns    = s_div.find(`select[name=${_this.get_id()}_filter_sort_column]`);
+      const check_asc   = s_div.find('input[order=sort_asc]');
+      const check_desc  = s_div.find('input[order=sort_desc]');
+      const sort_driver = [];  // 정렬시 이용할 자료의 배열
+      
+      $columns.each(function(i, column){
+        const col         = _toInt($(this).val());
+        const order_asc   = check_asc.eq(i).prop('checked');
+        const order_desc  = check_desc.eq(i).prop('checked');
+        const is_number   = _this.scheme[col].type === 'number';
+        const not_checked = !order_asc && !order_desc;
 
-      if(not_checked) return true;  // 선택된 체크박스가 없다면 건너뛴다
+        if(not_checked) return true;  // 선택된 체크박스가 없다면 건너뛴다
 
-      var functions = _this.sort_func(col),  // 정렬 function 을 가져온다
-        func      = functions[(is_number ? 'number_' : 'str_') + (order_asc ? 'asc' : 'desc')],
-        s_data    = { col : col, func: func };
-      sort_driver.push(s_data);
-    });
+        const sort_func = _this.sort_func(col);  // 정렬 function 을 가져온다
+        const func      = sort_func[(is_number ? 'number_' : 'str_') + (order_asc ? 'asc' : 'desc')];
+        sort_driver.push({ col, func });
+      });
 
-    // sort parameter function
-    sort_f = function(a,b){
-      var order = 0;
-      for(var i = 0; i < sort_driver.length; ++i){
-        var col = sort_driver[i].col;
-        if(a[col] !== b[col]) return sort_driver[i].func(a,b);
+      // sort parameter function
+      function sort_f (a,b) {
+        for(var i = 0; i < sort_driver.length; ++i){
+          const col = sort_driver[i].col;
+          if(a[col] !== b[col]) return sort_driver[i].func(a,b);
+        }
+        return 0;
+      };
+
+      if(sort_driver.length > 0){
+        // 정렬 조건이 입력된 상태라면 조건에 따라 정렬을 한다
+        _this.data.sort(sort_f);
+        _this.sorted = true;
+      } else if (_this.sorted){
+        // 정렬 조건이 입력되지 않았는데, 정렬된 상태라면 정렬을 revert 한다.
+        _this.data.sort( _this.sort_func(0).revert );
+        _this.sorted = false;
+      } else {
+        // 정렬 조건이 입력되지 않았고, 정렬된 상태가 아니라면 정렬하지 않는다.
       }
-      return order;
-    };
-
-    // 정렬 조건이 입력된 상태라면 조건에 따라 정렬을 한다
-    if(sort_driver.length > 0){
-      _this.data.sort(sort_f);
-      _this.sorted = true;
-    // 정렬 조건이 입력되지 않았는데, 정렬된 상태라면 정렬을 revert 한다.
-    } else if (_this.sorted){
-      _this.data.sort( _this.sort_func(0).revert );
-      _this.sorted = false;
-    // 정렬 조건이 입력되지 않았고, 정렬된 상태가 아니라면 정렬하지 않는다.
-    } else { }
   }; // ##
 
   // 1. 필터 작업
-  if( ! _this.validate_filter_options())
-    return alert('잘못된 입력입니다');
+  if( ! _this.validate_filter_options()) return alert('잘못된 입력입니다');
 
   _this.div.filter.hide(); // filter 설정창을 닫는다
 
-  if(_this.pre_filter_data)
-    _this.data = _this.pre_filter_data;
+  if(_this.pre_filter_data) _this.data = _this.pre_filter_data;
 
   // 필터링 복원을 위해 기존의 data array 를 pre_filter_data 에 보관한다
   _this.pre_filter_data = _this.data;
 
+  var post_filter_data = []; // 필터링 결과를 담을 배열을 선언한다
   // 필터링 작업을 수행한다
   if(functions.length > 0){
     post_filter_data = _this.data.filter(is_matched_data);
@@ -3777,8 +3761,8 @@ FGR.prototype.run_filter = function(_this){
   // 3. 화면 렌더링 -----------------------------------------------------
   // 공백 row 처리
   if(_this.data.length < _this.rows.length){
-    var last = _this.rows.length - _this.data.length;
-    var empty_rows = _this.create_init_data(last);
+    const last       = _this.rows.length - _this.data.length;
+    const empty_rows = _this.create_init_data(last);
     _this.data = _this.data.concat(empty_rows);
   }
 
@@ -3793,77 +3777,70 @@ FGR.prototype.run_filter = function(_this){
   
   for(var i = 0; i < functions.length; ++i){
     for(var j = 0; j < functions[i].length; ++j){
-      var filtered_column = (functions[i][j].col);
+      const filtered_column = (functions[i][j].col);
       _this.scheme[filtered_column].filter_icon.attr('class', _style.filter_btn_red);
     }
   }
-  return; };
+  return;
+};
 
 /**
  * 필터링 옵션을 검사한다
  */
 FGR.prototype.validate_filter_options = function(){
-  var _id = this.get_id(),
-    col  = this.div.filter.find(`select[name=${_id}_filter_cond_column]`),
-    val  = this.div.filter.find(`input[name=${_id}_filter_cond_value]`),
-    column, type, number_str;
+  const _id = this.get_id();
+  const col  = this.div.filter.find(`select[name=${_id}_filter_cond_column]`);
+  const val  = this.div.filter.find(`input[name=${_id}_filter_cond_value]`);
 
   for(var i = 0; i < col.length; ++i){
-    column     = col.eq(i).val();
-    type       = this.scheme[column].type;
-    number_str = _is_number_str(val.eq(i).val());
+    const column     = col.eq(i).val();
+    const type       = this.scheme[column].type;
+    const number_str = _is_number_str(val.eq(i).val());
     
     if(type === 'number' && ! number_str){
       val.eq(i).focus();
       return false;
     }
   }
-  return true; };
+  return true;
+};
 
 /**
  * filter 작업시 사용할 function 을 수집한다
  */
 FGR.prototype.collect_filter_functions = function(){
 
-  var _id     = this.get_id(),
-    div       = this.div.filter,
-    op        = div.find(`select[name=${_id}_filter_cond_operator]`),
-    col       = div.find(`select[name=${_id}_filter_cond_column]`),
-    cond      = div.find(`select[name=${_id}_filter_cond_condition]`),
-    val       = div.find(`input[name=${_id}_filter_cond_value]`),
-    functions = [];
+  const _id       = this.get_id();
+  const div       = this.div.filter;
+  const op        = div.find(`select[name=${_id}_filter_cond_operator]`);
+  const col       = div.find(`select[name=${_id}_filter_cond_column]`);
+  const cond      = div.find(`select[name=${_id}_filter_cond_condition]`);
+  const val       = div.find(`input[name=${_id}_filter_cond_value]`);
+  const functions = [];
 
-  for(var i = 0; i < op.length; ++i){
+  _.range(op.length).forEach( (i) => {
+      const is_empty_value = /^\s*$/.test(val.eq(i).val());
 
-    var is_empty_value = /^\s*$/.test(val.eq(i).val()),
-      and_array;
+      if(is_empty_value) return;
 
-    if(is_empty_value)
-      continue;
-
-    // OR operation 이라면 새로운 array 를 추가하고
-    // AND operation 이라면 기존의 마지막 array 에 추가한다. (단, 마지막 array 가 존재하지 않는다면 새로운 array 를 추가한다.
-    if('OR' === op.eq(i).val())
-      and_array = [];
-    else
-      and_array = functions.pop() || [];
-
-    var f_name = cond.eq(i).val(),
-      f_data = {
-        col  : _toInt(col.eq(i).val()),
-        func : _filter_functions[f_name],
-        value: val.eq(i).val()
+      // OR operation 이라면 새로운 array 를 추가하고
+      // AND operation 이라면 기존의 마지막 array 에 추가한다. (단, 마지막 array 가 존재하지 않는다면 새로운 array 를 추가한다.
+      const and_array = ('OR' === op.eq(i).val()) ? [] : (functions.pop() || []);
+      const f_name    = cond.eq(i).val();
+      const f_data    = {
+          col  : _toInt(col.eq(i).val()),
+          func : _filter_functions[f_name],
+          value: val.eq(i).val(),
       };
-    
-    if(this.scheme[f_data.col].type === 'number'){
-      if(_is_number_str(f_data.value))
-        f_data.value = Number(f_data.value);
-    }
-
-    and_array.push(f_data);
-    functions.push(and_array);
-  }
-  return functions; };
+      if(this.scheme[f_data.col].type === 'number'){
+        if(_is_number_str(f_data.value))
+          f_data.value = Number(f_data.value);
+      }
+      and_array.push(f_data);
+      functions.push(and_array);
+  });
+  return functions;
+};
 
 /**
  * TODO: 존속여부 고민할 것. 과연 이 function 이 필요한가?
