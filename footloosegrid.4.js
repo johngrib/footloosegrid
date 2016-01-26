@@ -4092,39 +4092,32 @@ function _create_search_div(){
  */
 FGR.prototype.create_search_reg_exp = function (query, reg_exp, whole_word, ignore_case, wild_card){
 
-  var exp = query,
-    match_reg;
-
-  if(query === undefined || query === null)
-    return /$^/;
+  if(query === undefined || query === null) return /$^/;
 
   // 정규식 옵션이 있다면 사용자가 입력한 정규식을 그대로 사용한다
-  if(reg_exp){
-    match_reg = new RegExp(exp, ignore_case ? 'i' : undefined);
+  if(reg_exp) return new RegExp(exp, ignore_case ? 'i' : undefined);
 
-  // 정규식 옵션이 없다면 query 를 참고하여 정규식을 생성한다
-  } else {
+  // 정규식 옵션이 없다면 사용자의 query 를 바탕으로 정규식을 생성한다
+  var exp = query;
 
-    // 공백을 \s 로 치환한다
-    exp = exp.replace(/\s/g, '\\s');
+  // 1. 공백을 \s 로 치환한다
+  exp = exp.replace(/\s/g, '\\s');
 
-    // 사용자가 입력한 특수문자 앞에 \ 를 붙여준다. 예) ? -> \?
-    exp = exp.replace(/([\!\@\#\$\%\^\&\*\(\)\-\_\=\+\[\{\]\}\`\~\;\:\'\"\,<\.\>\/\?\\\|])/g, '\\$1');
+  // 2. 사용자가 입력한 특수문자 앞에 \ 를 붙여준다. 예) ? -> \?
+  exp = exp.replace(/([\!\@\#\$\%\^\&\*\(\)\-\_\=\+\[\{\]\}\`\~\;\:\'\"\,<\.\>\/\?\\\|])/g, '\\$1');
 
-    // 와일드 카드를 사용한다면, \? 를 . 으로, \* 를 .* 로 치환한다.
-    if(wild_card){
-      exp = exp.replace(/\\\?/g, '.' );
-      exp = exp.replace(/\\\*/g, '.*');
-    }
-
-    // 일치 검색이라면 ^ $ 를 정규 표현식의 앞뒤에 붙여준다.
-    if(whole_word)
-      exp = '^' + exp + '$';
-
-    // 정규식을 생성한다. ignore_case 옵션이 있다면 i 를 추가한다
-    match_reg = new RegExp(exp, ignore_case ? 'i' : undefined);
+  // 3. 와일드 카드를 사용한다면, \? 를 . 으로, \* 를 .* 로 치환한다.
+  if(wild_card){
+    exp = exp.replace(/\\\?/g, '.' );
+    exp = exp.replace(/\\\*/g, '.*');
   }
-  return match_reg; };
+
+  // 4. 일치 검색이라면 ^ $ 를 정규 표현식의 앞뒤에 붙여준다.
+  if(whole_word) exp = '^' + exp + '$';
+
+  // 5. 정규식을 생성한다. ignore_case 옵션이 있다면 i 를 추가한다
+  return new RegExp(exp, ignore_case ? 'i' : undefined);
+};
 
 /**
  * 메시지 출력용 모달을 제어한다. 사용법은 다음과 같다.
