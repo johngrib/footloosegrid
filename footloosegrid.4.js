@@ -3520,36 +3520,36 @@ function _create_filter_sort_div(_this){
  */
 function _create_filter_condition_div(_this){
 
-  var _m         = _msg,
-    _id        = _this.get_id(),
-    div        = $('<div>',   {'class': _style.filter_sort_div}),
-    sort_title = $('<label>', {'class': _style.filter_filter_title}).appendTo(div);
-
-  // f_operator
-  const f_operator = $('<select>',{ func: 'operator',  name: `${_id}_filter_cond_operator`});
-  f_operator
-    .append($('<option>', {text: 'AND', value: 'AND' }),
-            $('<option>', {text: 'OR',  value: 'OR'  }))
-    .change(function(){
-      var $this = $(this),
-        border= ('AND' === $this.val()) ? '1px solid transparent' : '1px solid red';
-      $this.closest('div').css('border-top', border);
-    });
-
-  // f_column
-  const f_column   = _create_filter_column_select(_this, {func: 'column', type: 'cond', name: `${_id}_filter_cond_column`});
-  f_column.change(function(){
-    var $this       = $(this),
-      div         = $this.closest('div'),
-      col         = $this.val(),
-      column      = _this.scheme[col],
-      number_type = column.type === 'number',
-      check_type  = column.type.match(/check|radio/),
-      condition   = div.find('select[func=condition]'),
-      selector    = 'str';
-
-    if(check_type)       selector = 'check'; 
-    else if(number_type) selector = 'number';
+  // +, - 버튼으로 정렬 정보 입력 div 를 추가, 삭제한다
+  function click_plus_minus () {
+    const $this       = $(this);
+    const $parent_div = $this.closest('div');
+    if('plus' === $this.attr('func')){
+      $parent_div.clone(true, true).insertAfter($parent_div)
+        .css('border-top', '1px solid transparent')
+        .find('button, select').css('visibility', '');
+    } else {
+      $parent_div.remove();
+    }
+  }
+  
+  // 필터 연산자 변경
+  function operator_change () {
+    const $this  = $(this);
+    const border = ('AND' === $this.val()) ? '1px solid transparent' : '1px solid red';
+    $this.closest('div').css('border-top', border);
+  }
+  
+  // 필터 대상 컬럼 변경
+  function column_change () {
+    const $this       = $(this);
+    const condition   = $this.closest('div').find('select[func=condition]');
+    const selector    = (() => {
+      const type = _this.scheme[$this.val()].type;
+      if(type.match(/check|radio/)) return 'check'; 
+      if(type === 'number')         return 'number';
+      else                          return 'str';
+    })();
 
     if(_this.is_IE()){
       condition.find('option').attr('disabled', true);
@@ -3558,63 +3558,53 @@ function _create_filter_condition_div(_this){
       condition.find('option').hide();
       condition.find('option[d_type*=' + selector + ']').show();
     }
-  });
+  }
 
-  // f_condition
-  const f_condition= $('<select>',{ func: 'condition', name: `${_id}_filter_cond_condition`});
- ;[
-   {html: _m.filter_none, value: 'none',         d_type: 'number,str,check'},
-   {html: _m.filter_eq,   value: 'equal',        d_type: 'number,str'},
-   {html: _m.filter_ne,   value: 'not_equal',    d_type: 'number,str'},
+  const _id = _this.get_id();
 
-   {html: _m.filter_lt,   value: 'less_than',    d_type: 'number'},
-   {html: _m.filter_gt,   value: 'greater_than', d_type: 'number'},
-   {html: _m.filter_le,   value: 'less_equal',   d_type: 'number'},
-   {html: _m.filter_ge,   value: 'greater_equal',d_type: 'number'},
+  const div             = $('<div>',    {'class': _style.filter_sort_div});
+    const sort_title    = $('<label>',  {'class': _style.filter_filter_title});
+    const cond_div      = $('<div>',    {'class': _style.filter_cond});
+      const f_operator  = $('<select>', { func: 'operator',  name: `${_id}_filter_cond_operator`}).change(operator_change);
+        const opt_and   = $('<option>', {text: 'AND', value: 'AND' });
+        const opt_or    = $('<option>', {text: 'OR',  value: 'OR'  });
+      const f_column    = _create_filter_column_select(_this, {func: 'column', type: 'cond', name: `${_id}_filter_cond_column`}).change(column_change);
+      const f_condition = $('<select>', { func: 'condition', name: `${_id}_filter_cond_condition`});
+        //const options
+      const f_value     = $('<input>',  { func: 'value',     name: `${_id}_filter_cond_value`});
+      const plus_btn    = $('<button>',{'class': _style.filter_plus_btn,  func: 'plus' }).click(click_plus_minus);
+      const minus_btn   = $('<button>',{'class': _style.filter_minus_btn, func: 'minus'}).click(click_plus_minus);
 
-   {html: _m.filter_begin,value: 'begins_with',  d_type: 'number,str'},
-   {html: _m.filter_end,  value: 'ends_with',    d_type: 'number,str'},
-   {html: _m.filter_cont, value: 'contains',     d_type: 'number,str'},
-   {html: _m.filter_ncont,value: 'not_contain',  d_type: 'number,str'}
-   //{html: 'True 값 있음', value: 'is_true_check', d_type: 'check'},
-   //{html: 'False 값 없음',value: 'is_false_check',d_type: 'check'}
-  ].forEach((v) => $('<option>', v).appendTo(f_condition));
+  // options of f_condition
+  f_condition.append([
+    {html: _msg.filter_none, value: 'none',         d_type: 'number,str,check'},
+    {html: _msg.filter_eq,   value: 'equal',        d_type: 'number,str'},
+    {html: _msg.filter_ne,   value: 'not_equal',    d_type: 'number,str'},
 
-  const f_value   = $('<input>', { func: 'value',     name: `${_id}_filter_cond_value`});
+    {html: _msg.filter_lt,   value: 'less_than',    d_type: 'number'},
+    {html: _msg.filter_gt,   value: 'greater_than', d_type: 'number'},
+    {html: _msg.filter_le,   value: 'less_equal',   d_type: 'number'},
+    {html: _msg.filter_ge,   value: 'greater_equal',d_type: 'number'},
 
-  // +, - buttons
-  const plus_btn  = $('<button>',{'class': _style.filter_plus_btn,  func: 'plus' });
-  const minus_btn = $('<button>',{'class': _style.filter_minus_btn, func: 'minus'});
+    {html: _msg.filter_begin,value: 'begins_with',  d_type: 'number,str'},
+    {html: _msg.filter_end,  value: 'ends_with',    d_type: 'number,str'},
+    {html: _msg.filter_cont, value: 'contains',     d_type: 'number,str'},
+    {html: _msg.filter_ncont,value: 'not_contain',  d_type: 'number,str'}
+    //{html: 'True 값 있음', value: 'is_true_check', d_type: 'check'},
+    //{html: 'False 값 없음',value: 'is_false_check',d_type: 'check'}
+  ].map(  (attr) => $('<option>', attr)  ));
 
-  ;[plus_btn, minus_btn].forEach((btn) => btn.click(
-      function click_plus_minus () {
-        const $this       = $(this);
-        const $parent_div = $this.closest('div');
+  // assemble
+  div.append(sort_title, cond_div);
+  cond_div.append(f_operator, f_column, f_condition, f_value, plus_btn, minus_btn);
+  f_operator.append( opt_and, opt_or );
 
-        // +, - 버튼으로 정렬 정보 입력 div 를 추가, 삭제한다
-        if('plus' === $this.attr('func')){
-          $parent_div.clone(true, true).insertAfter($parent_div)
-            .css('border-top', '1px solid transparent')
-            .find('button, select').css('visibility', '');
-        } else {
-          $parent_div.remove();
-        }
-      }
-  ));
-
-  // 조립한다
-  const cond_div   = $('<div>', {'class': _style.filter_cond});
-  cond_div.append([f_operator, f_column.clone(true, true), f_condition, f_value, plus_btn, minus_btn])
-    .clone(true, true).appendTo(div).find('select').change();
+  // 후처리
+  cond_div.find('select').change();
+  div.find('select[func=operator]').eq(0).val('OR').css('visibility', 'hidden');
+  div.find('button[func=minus]').eq(0).css('visibility', 'hidden');
   
-  div.find('select[func=operator]').eq(0)
-    .val('OR')
-    .css('visibility', 'hidden');
-  div.find('button[func=minus]').eq(0)
-    .css('visibility', 'hidden');
-  
-  if( ! _this.cfg.use_filter_panel)
-    div.hide();
+  if( ! _this.cfg.use_filter_panel) div.hide();
 
   return div;
 };
