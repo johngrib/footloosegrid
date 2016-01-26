@@ -3843,7 +3843,6 @@ FGR.prototype.collect_filter_functions = function(){
 };
 
 /**
- * TODO: 존속여부 고민할 것. 과연 이 function 이 필요한가?
  * data 필터링 작업을 수행한다.
  * 
  * @param is_matched_data : filter 펑션
@@ -3856,32 +3855,30 @@ FGR.prototype.collect_filter_functions = function(){
  */
 FGR.prototype.data_filter = function(is_matched_data, target_column){
 
-  var _this = this,
-    post_filter_data,  // 필터링 결과를 담을 배열을 선언한다. 추후 이 배열이 this.data 에 입력된다.
-    i ;
+  const _this = this;
+  var post_filter_data;  // 필터링 결과를 담을 배열을 선언한다. 추후 이 배열이 this.data 에 입력된다.
 
-  if(_this.pre_filter_data)
+  if(_this.pre_filter_data) 
     _this.data = _this.pre_filter_data;
 
   _this.pre_filter_data = _this.data; // 필터링 복원을 위해 기존의 data array 를 pre_filter_data 에 보관한다
   
   // 필터링 작업을 수행한다
-  if(_.isFunction(is_matched_data)){
-    post_filter_data = _this.data.filter(is_matched_data);
-      _this.filtered   = true;
-  } else {
-    post_filter_data = _this.data;
-    _this.filtered   = false;
-  }
+  const function_input = _.isFunction(is_matched_data);
+  post_filter_data = function_input ? _this.data.filter(is_matched_data) : _this.data;
+  
+  // 필터링 된 상태인지를 표시한다.
+  _this.filtered   = function_input;
 
+  // 필터링 된 데이터를 그리드 데이터로 입력하고, calc_row 를 갱신한다.
   _this.data = post_filter_data;
   _this.refresh_calc_cell();
 
   // 공백 row 처리
   if(_this.data.length < _this.rows.length){
-    var last       = _this.rows.length - _this.data.length,
-      empty_rows = _this.create_init_data(last);
-    _this.data     = _this.data.concat(empty_rows);
+    const last       = _this.rows.length - _this.data.length;
+    const empty_rows = _this.create_init_data(last);
+    _this.data       = _this.data.concat(empty_rows);
   }
 
   _this.scroll_row(-_this.data.length * 2);          // 스크롤을 가장 위로 올린다
@@ -3894,12 +3891,12 @@ FGR.prototype.data_filter = function(is_matched_data, target_column){
   _this.scheme.forEach(function(col){
     col.filter_icon.attr('class', _style.filter_btn);
   });
-
-  for(i = 0; i < target_column.length; ++i){
-    var filtered_column = (target_column[i]);
-    _this.scheme[filtered_column].filter_icon.attr('class', _style.filter_btn_red);
-  }
-  return this; };
+  
+  target_column.forEach( (column) => {
+    _this.scheme[column].filter_icon.attr('class', _style.filter_btn_red);
+  });
+  return this;
+};
 
 /**
  * 검색창을 생성한다.
