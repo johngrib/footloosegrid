@@ -3856,28 +3856,28 @@ FGR.prototype.collect_filter_functions = function(){
 FGR.prototype.data_filter = function(is_matched_data, target_column){
 
   const _this = this;
-  var post_filter_data;  // 필터링 결과를 담을 배열을 선언한다. 추후 이 배열이 this.data 에 입력된다.
 
-  if(_this.pre_filter_data) 
-    _this.data = _this.pre_filter_data;
+  // 이미 사전에 필터링 되어 있는 상태라면 필터링 상태를 복원한다.
+  if(_this.pre_filter_data) _this.data = _this.pre_filter_data;
 
-  _this.pre_filter_data = _this.data; // 필터링 복원을 위해 기존의 data array 를 pre_filter_data 에 보관한다
+  // 필터링 복원을 위해 기존의 data array 를 pre_filter_data 에 보관한다
+  _this.pre_filter_data = _this.data;
   
   // 필터링 작업을 수행한다
-  const function_input = _.isFunction(is_matched_data);
-  post_filter_data = function_input ? _this.data.filter(is_matched_data) : _this.data;
-  
-  // 필터링 된 상태인지를 표시한다.
-  _this.filtered   = function_input;
+  const do_filter = _.isFunction(is_matched_data);
 
-  // 필터링 된 데이터를 그리드 데이터로 입력하고, calc_row 를 갱신한다.
-  _this.data = post_filter_data;
+  // 필터링 결과를 담을 배열을 선언한다. 추후 이 배열이 this.data 에 입력된다.
+  _this.data = do_filter ? _this.data.filter(is_matched_data) : _this.data;
+
+  // 필터링 된 상태인지를 표시한다.
+  _this.filtered = do_filter;
+
+  // calc_row 를 갱신한다.
   _this.refresh_calc_cell();
 
   // 공백 row 처리
   if(_this.data.length < _this.rows.length){
-    const last       = _this.rows.length - _this.data.length;
-    const empty_rows = _this.create_init_data(last);
+    const empty_rows = _this.create_init_data(_this.rows.length - _this.data.length);
     _this.data       = _this.data.concat(empty_rows);
   }
 
@@ -3903,85 +3903,77 @@ FGR.prototype.data_filter = function(is_matched_data, target_column){
  */ 
 function _create_search_div(){
 
-  var _this    = this,
-    _id      = this.get_id(),
-    div_attr = {'class': _style.search_div, align: 'right'},
-    div      = $('<div>', div_attr).appendTo(this.div.main).draggable({ containment: "parent" }),
-    field1   = $('<fieldset>', {align: 'left'}),
-    field2   = $('<fieldset>', {align: 'left'}),
-    field3   = $('<fieldset>', {align: 'left'}),
-    title    = $('<legend>', {html: _msg.search   }),
-    title2   = $('<legend>', {html: _msg.direction}),
-    title3   = $('<legend>', {html: _msg.option   }),
-    find_btn = $('<button>', {html: _msg.find_btn   }),
-    repl_btn = $('<button>', {html: _msg.replace_btn}),
-    close_btn= $('<button>', {html: _msg.close_btn  }),
-    column_select = _create_filter_column_select(this, {id: `${_id}_search_column_range`}),
-    b_print, d_print, options;
+  function create_table(blue_print){
+      const $table = $('<table>');
+      for(var i in blue_print){
+        const tr = $('<tr>').appendTo($table);
+        for(var j in blue_print[i])
+          $('<td>').appendTo(tr).append(blue_print[i][j]);
+      }
+      return $table;
+  }
 
-  this.div.search = div;
+  const _this = this;
+  const _id   = this.get_id();
+  const div   = $('<div>', {'class': _style.search_div, align: 'right'});
+  const column_select = _create_filter_column_select(this, {id: `${_id}_search_column_range`});
+
+  this.div.search = div.appendTo(this.div.main).draggable({ containment: "parent" });
+  column_select.find('option[type=radio], option[type=check]').remove();
+  column_select.prepend($('<option>', {html: '전체', value: 'all'}));
 
   // 검색 fieldset
-  b_print = {
+  const b_print = {
     column  : { title: $('<label>', {html: _msg.target}),   obj: column_select},
     search  : { title: $('<label>', {html: _msg.do_search}),obj: $('<input>') },
-    replace : { title: $('<label>', {html: 'replace'}),         obj: $('<input>') }
+    replace : { title: $('<label>', {html: 'replace'}),     obj: $('<input>') },
   };
 
   // 방향 fieldset
-  d_print = {
+  const d_print = {
     direction : {
       f_obj   : $('<input>', {type: 'radio', name : `${_id}_search_dir`, id: `${_id}_search_f_dir`, checked: true}), 
       f_title : $('<label>', {html: _msg.forward,'for': `${_id}_search_f_dir`}), 
       b_obj   : $('<input>', {type: 'radio', name : `${_id}_search_dir`, id: `${_id}_search_b_dir`}), 
-      b_title : $('<label>', {html: _msg.reward, 'for': `${_id}_search_b_dir`})
+      b_title : $('<label>', {html: _msg.reward, 'for': `${_id}_search_b_dir`}),
     }
   };
 
-  column_select.find('option[type=radio], option[type=check]').remove();
-  column_select.prepend($('<option>', {html: '전체', value: 'all'}));
-
   // 옵션 fieldset
-  options = {
+  const options = {
     case_ignore : {  // 대소문자 무시
-      obj   : $('<input>', {type: 'checkbox',     'id' : `${_id}_search_case_ignore`}),
-      title : $('<label>', {html: _msg.ig_case,   'for': `${_id}_search_case_ignore`}) },
+      obj   : $('<input>', {type: 'checkbox',     'id' :`${_id}_search_case_ignore`}),
+      title : $('<label>', {html: _msg.ig_case,   'for':`${_id}_search_case_ignore`}) },
     whole_word  : {  // 일치하는 단어만 검색
-      obj   : $('<input>', {type: 'checkbox',     'id' : `${_id}_search_whole_word`}),
-      title : $('<label>', {html: _msg.whole_word,'for': `${_id}_search_whole_word`}) },
+      obj   : $('<input>', {type: 'checkbox',     'id' :`${_id}_search_whole_word`}),
+      title : $('<label>', {html: _msg.whole_word,'for':`${_id}_search_whole_word`}) },
     wild_card   : {  // 와일드 카드 사용
-      obj   : $('<input>', {type:'checkbox',      'id' : `${_id}_search_wild_card`}),
-      title : $('<label>', {html: _msg.wild_card, 'for': `${_id}_search_wild_card`}) },
+      obj   : $('<input>', {type:'checkbox',      'id' :`${_id}_search_wild_card`}),
+      title : $('<label>', {html: _msg.wild_card, 'for':`${_id}_search_wild_card`}) },
     reg_exp     : {  // 정규 표현식 사용
-      obj :   $('<input>', {type:'checkbox',      'id' : `${_id}_search_regular_expression`}),
-      title : $('<label>', {html: _msg.reg_exp,   'for': `${_id}_search_regular_expression`}) }
+      obj :   $('<input>', {type:'checkbox',      'id' :`${_id}_search_regular_expression`}),
+      title : $('<label>', {html: _msg.reg_exp,   'for':`${_id}_search_regular_expression`}) }
   };
 
-  function create_table(blue_print){
-    var table = $('<table>'), tr, td;
-    for(var i in blue_print){
-      tr = $('<tr>').appendTo(table);
-      for(var j in blue_print[i]){
-        td = $('<td>').appendTo(tr);
-        td.append(blue_print[i][j]); } }
-    return table; };
+  const field1   = $('<fieldset>', {align: 'left'});
+  const field2   = $('<fieldset>', {align: 'left'});
+  const field3   = $('<fieldset>', {align: 'left'});
+  const title    = $('<legend>', {html: _msg.search   });
+  const title2   = $('<legend>', {html: _msg.direction});
+  const title3   = $('<legend>', {html: _msg.option   });
+  const find_btn = $('<button>', {html: _msg.find_btn   });
+  const repl_btn = $('<button>', {html: _msg.replace_btn});
+  const close_btn= $('<button>', {html: _msg.close_btn  });
 
-  var search_menu = create_table(b_print),
-    direction   = create_table(d_print),
-    option_menu = create_table(options);
-  
   // 조립
   div.append([field1, field2, field3, find_btn, repl_btn, close_btn]);
-  field1.append([title, search_menu]);
-  field2.append([title2, direction]);
-  field3.append([title3, option_menu]);
+  field1.append([title,  create_table(b_print)]);
+  field2.append([title2, create_table(d_print)]);
+  field3.append([title3, create_table(options)]);
 
   // show, hide 처리
-  b_print.replace.obj  [this.cfg.search_replace    ? 'show' : 'hide'](); // replace
-  b_print.replace.title[this.cfg.search_replace    ? 'show' : 'hide']();
-  repl_btn             [this.cfg.search_replace    ? 'show' : 'hide']();
-  options.reg_exp.obj  [this.cfg.search_by_reg_exp ? 'show' : 'hide'](); // 정규식
-  options.reg_exp.title[this.cfg.search_by_reg_exp ? 'show' : 'hide']();
+ ;[b_print.replace.obj, b_print.replace.title, repl_btn].forEach( (obj) => obj[this.cfg.search_replace ? 'show':'hide']() );
+ ;[options.reg_exp.obj, options.reg_exp.title].forEach( (obj) => obj[this.cfg.search_by_reg_exp ? 'show':'hide']() );
 
   // 이벤트 처리
   column_select.keydown(function(e){
@@ -3991,24 +3983,20 @@ function _create_search_div(){
     } });
 
   b_print.search.obj.keydown(function(e){
-    if(e.keyCode === 13)
+    if(e.keyCode === 13)  // <ENTER>
       find_btn.click();
   });
 
   // regular_expression 옵션이 켜지면 whole_word, wild_card 옵션은 disabled 상태로 바뀐다.
   options.reg_exp.obj.click(function(e){
-    var op     = options,
-      flag   = $(this).prop('checked'),
-      disable= function (obj, flag){ obj.attr('disabled', flag).css( 'opacity',  flag ? 0.3 : 1); };
-
-    // disable 대상
-    [ op.whole_word.obj, op.whole_word.title, op.wild_card.obj,  op.wild_card.title ]
-      .forEach(function(v){ disable(v, flag); });
+    const op      = options;
+    const flag    = $(this).prop('checked');
+    const disable = (obj, flag) => { obj.attr('disabled', flag).css('opacity', flag ? 0.3 : 1) };
+    [].concat( _.values(op.whole_word), _.values(op.wild_card) ).forEach( (o) => disable(o, flag) );
   });
 
   // close 버튼 
-  close_btn
-    .click(function(e){ div.hide(); })
+  close_btn.click(function(e){ div.hide(); })
     .keydown(function(e){
       if(e.keyCode === 9 && !e.shiftKey){
         column_select.focus();
@@ -4018,26 +4006,27 @@ function _create_search_div(){
   // 검색 버튼
   find_btn.click(function(e){
 
-    var direction  = d_print.direction.f_obj.prop('checked') ? 1 : -1,
-      whole_word = options.whole_word.obj.prop('checked'),
-      ignore_case= options.case_ignore.obj.prop('checked'),
-      wild_card  = options.wild_card.obj.prop('checked'),
-      reg_exp    = options.reg_exp.obj.prop('checked'),
-      query      = b_print.search.obj.val(),
-      range      = column_select.val(),
-      start_col  = (range === 'all') ? 0 : _toInt(range),
-      end_col    = (range === 'all') ? _this.scheme.length : _toInt(range) + 1,
-      // ※ is_match 펑션의 두 파라미터는 다음과 같다. d : 필터링 할 데이터, v : 사용자가 입력한 비교 값
-      is_match   = _this.create_search_reg_exp (query, reg_exp, whole_word, ignore_case, wild_card),
-      start_row  = _this.row_selected + direction,
-      query_arr = [],  // query_arr, query_reg : select 타입인 경우 실제 데이터 값과 표시되는 값이 다르기 때문에
-      query_reg = [];  // 실제 데이터 값(text)과 비교하지 않고, text 값과 비교해야 한다. 따라서 검색의 기준이 되는 query 배열을 마련한다.
+    const direction  = d_print.direction.f_obj.prop('checked') ? 1 : -1;
+    const whole_word = options.whole_word.obj.prop('checked');
+    const ignore_case= options.case_ignore.obj.prop('checked');
+    const wild_card  = options.wild_card.obj.prop('checked');
+    const reg_exp    = options.reg_exp.obj.prop('checked');
+    const query      = b_print.search.obj.val();
+    const range      = column_select.val();
+    const start_col = (range === 'all') ? 0 : _toInt(range);
+    const end_col   = (range === 'all') ? _this.scheme.length : _toInt(range) + 1;
+    // ※ is_match 펑션의 두 파라미터는 다음과 같다. d : 필터링 할 데이터, v : 사용자가 입력한 비교 값
+    const is_match  = _this.create_search_reg_exp (query, reg_exp, whole_word, ignore_case, wild_card);
+    const start_row = _this.row_selected + direction;
+    const query_arr = [];  // query_arr, query_reg : select 타입인 경우 실제 데이터 값과 표시되는 값이 다르기 때문에
+    const query_reg = [];  // 실제 데이터 값(text)과 비교하지 않고, text 값과 비교해야 한다. 따라서 검색의 기준이 되는 query 배열을 마련한다.
 
-    // 검색 query 수집
+    // 검색 query 수집: 검색 속도를 위해 각 컬럼(타입)별로 정규식을 생성한다.
     _this.scheme.forEach(function(column, i){
       query_reg[i] = /$^/;
 
       if(column.type === 'select'){
+        // select type 인 경우 option 을 검색해야 한다.
         loopK : for(var k = 0; k < column.option.length; ++k){
           if(is_match.test(column.option[k].text)){
             query_arr[i] = column.option[k].value; 
@@ -4058,11 +4047,13 @@ function _create_search_div(){
     }, _this);
 
     // 검색 ---------------------------------------------------------------------
-    var success   = false,
-      set_focus = function(){ 
+    var success   = false;
+    var cell;
+    const set_focus = function set_focus () { 
+        if(!cell) return;
         cell.closest('.' + _style.row).mousedown();
         cell.click().focus(); 
-      };
+    };
 
     // 커서가 있는 라인부터 검색한다.
     loopI : for(var i = start_row, cnt = 0; cnt < _this.data.length; i+=direction, ++cnt){
@@ -4073,24 +4064,22 @@ function _create_search_div(){
         i = _this.data.length - 1;
 
       for(var j = start_col; j < end_col; ++j){
-        var v      = _this.data[i][j],
-          column = _this.scheme[j];
+        const v = _this.data[i][j];
 
         if(query_reg[j].test(v)){
+          _this.scroll_row(-_this.data.length * 2).scroll_row(i);
           success = true;
-          _this.scroll_row(-_this.data.length * 2);  
-          _this.scroll_row(i);
-          var cell = _this.cell[ i - _this.current_top_line][j];
+          cell    = _this.cell[ i - _this.current_top_line][j];
           setTimeout(set_focus, 100);
           break loopI;
         }
       }
     } // enf of loopI
 
-    if( ! success)
-      alert(_msg.search_fail);
+    if( ! success) alert(_msg.search_fail);
   });
-  return this; };
+  return this;
+};
 
 /**
  * 검색에 사용할 정규 표현식을 동적으로 생성한다
