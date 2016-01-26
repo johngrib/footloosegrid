@@ -4136,59 +4136,59 @@ FGR.prototype.create_search_reg_exp = function (query, reg_exp, whole_word, igno
  */
 FGR.prototype.modal = function(text, button){
 
-  var _this  = this,
-    modal  = this.div.modal,
-    body   = modal.find('div[role=body]'),
-    cont   = modal.find('div[role=control]'),
-    disable= function(d){ if(_.isBoolean(d)) _this.disable(d); },
-    func   = {
-      obj   : modal,
-      show  : function(d){ modal.show(); disable(d); },
-      hide  : function(d){ modal.hide(); disable(d); },
-      text  : function(m){ body.empty().append(m);   },
-      button: function(v){ cont[v ? 'show' : 'hide']();}
-    };
+  const _this  = this;
+  const modal  = this.div.modal;
+  const body   = modal.find('div[role=body]');
+  const cont   = modal.find('div[role=control]');
+  const disable= (d) => { if(_.isBoolean(d)) _this.disable(d); };
+  const func   = {
+      obj : modal,
+      show (d) { modal.show(); disable(d); },
+      hide (d) { modal.hide(); disable(d); },
+      text (m) { body.empty().append(m);   },
+      button (v) { cont[v ? 'show' : 'hide'](); },
+  };
 
   func.text(text);
   func.button(button);
-  return func; };
+  return func;
+};
 
 /**
  * 범용 모달을 생성한다
  * @returns {FGR}
  */
 function _create_modal_div(){
-  var _this  = this,
-    div_attr = {'class': _style.modal_div, align: 'center'},
-    div      = $('<div>', div_attr).appendTo(this.div.main),
-    title    = $('<div>', {html: '', role: 'title', 'class': _style.modal_content}),
-    body     = $('<div>', {html: '', role: 'body',  'class': _style.modal_content}),
-    control  = $('<div>', {role: 'control', align: 'center', 'class': _style.modal_content}),
-    okay_btn = $('<button>', {text: _msg.confirm});
-  
-  this.div.modal  = div;
+  const  _this   = this;
+  const div_attr = {'class': _style.modal_div, align: 'center'};
+  const div      = $('<div>', div_attr).appendTo(this.div.main);
+  const title    = $('<div>', {html: '', role: 'title', 'class': _style.modal_content});
+  const body     = $('<div>', {html: '', role: 'body',  'class': _style.modal_content});
+  const control  = $('<div>', {role: 'control', align: 'center', 'class': _style.modal_content});
+  const okay_btn = $('<button>', {text: _msg.confirm});
+  this.div.modal = div;
 
   div.position({my: 'center', at : 'center', of: this.div.main});
   div.append([title, body, control]);
   control.append(okay_btn);
-  okay_btn.css({position: 'relative', right: 0}).click(function(){ div.hide(); _this.disable(false);});
+  okay_btn.css({position: 'relative', right: 0}).click(() => { div.hide(); _this.disable(false);});
 
   title.hide();
   control.hide();
-  return this; };
+  return this;
+};
 
 // TODO : 빅 넘버 타입 추가할 것
 // TODO : 평균, 합계에 format 입력할 것
 // TODO : 필터 기능 적용시 체크박스와 라디오버튼 조건으로 true/false 선택하게 할 것.
-// TODO : 컬럼 헤더에 정렬 아이콘 추가할 것.
 // TODO : calc column 추가하고, 중간 sum 기능 추가할 것
 // TODO : hide_empty_rows 옵션을 추가할 것.
-// TODO : paste 시 validation 옵션 강화할 것
 
 /**
  * 값이 바뀐 row 를 배열로 리턴한다
  */
 FGR.prototype.get_modified_rows = function(){
-  return this.data.filter(function(row){ return row.modified; }); };
+  return this.data.filter((row) => row.modified );
+};
 
 return FGR; })(jQuery);  // end of codes
