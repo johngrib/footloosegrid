@@ -4,9 +4,6 @@
  * Licensed MIT 
  */
 
-/* jshint laxcomma: true*/
-"use strict";
-
 /** 퍼포먼스 테스트를 위한 time count 펑션. console.time 과 용법은 같다 */
 function time_start (msg){ return (time_start[msg] = new Date().getTime()); }
 
@@ -14,9 +11,12 @@ function time_start (msg){ return (time_start[msg] = new Date().getTime()); }
 function time_end(msg){
   const result = new Date().getTime() - time_start[msg];
   console.log(`${msg} : ${result}`);
-  return result;}
+  return result;
+}
 
 var footloosegrid = (function _create_footloosegrid_function($){
+
+  "use strict";
 
 // support functions
 
@@ -107,7 +107,8 @@ function _check_ie_version(){
     version = 8;
   @end
 @*/
-  return version; };
+  return version;
+};
 
 /**
  * css 파일에 정의되지 않은 class 를 생성하여 삽입한다
@@ -952,7 +953,6 @@ function FGR(id, cfg, scheme) {
   this.rows        = [];    // rows 객체를 보관할 배열 선언 (논리상의 row  가 아니라 화면 상의 row : div element)
 
   // drill down 기능을 위한 변수들
-  this.hidden_row_cnt = 0;   // drill down 기능 사용시 scroll bar 의 길이 조절용 자료로 사용된다
   this.drill_btn      = [];  // drill button  객체를 보관할 배열 선언 (화면 상의 button)
   this.gen_label      = [];  // gen_label div 객체를 보관할 배열 선언 (화면 상의 div)
   this.drill_cell     = [];
@@ -1471,7 +1471,6 @@ function _create_rows(_this, data, callback){
   _this.div.data_table.append(_this.div.under_line_right);
 
   // 수직 스크롤 바의 길이를 조절한다.
-  _this.hidden_row_cnt = 0;
   _adjust_scroll_v(_this, _this.data.length);
 
   // 하나의 row 를 추가해 주는 function
