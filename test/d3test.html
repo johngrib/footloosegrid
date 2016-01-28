@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>Grid 테스트</title>
+<link rel="stylesheet" type="text/css" href="../css/footloosegrid.4.css">
+<link rel="stylesheet" type="text/css" href="../css/jquery-ui.css">
+<style type="text/css"> </style>
+
+<script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+<script src="../lib/underscore-min.js"></script>
+<script src="../lib/jquery-1.11.3.min.js"></script>
+<script src="../lib/jquery-ui.min.js"></script>
+<script src="../lib/FileSaver.min.js"></script>
+<script src="../lib/jszip.min.js"></script>
+<script src="../lib/xlsx.min.js"></script>
+<script src="../footloosegrid.4.js"></script>
+<script type="text/javascript">
+
+  $(document).ready(function(){
+
+    var config1 = {
+      calc_row          : 'top',
+      cols_show         : 11,
+      fixed_header      : 1,
+      save_original_data: true,
+      save_deleted_data : true,
+      checkbox_size     : 20,
+      use_filter_div    : true,
+      use_filter_panel  : true,
+      use_sort_panel    : true,
+      search_by_reg_exp : true,
+    };
+
+
+    var url = 'https://docs.google.com/spreadsheets/d/1CZhnZX_y7ynsSNfDhxNnrp0ObJLQ2_GyDnIL5vR0wrY/pub?gid=425043933&single=true&output=tsv';
+    $.ajax(url).done(function(result){
+        const r_data = result.split('\n').map((row) => row.split('\t'));
+        
+        const header = r_data.filter((row) => row[0] === 'header');
+        const data   = r_data.filter((row) => row[0] !== 'header');
+        
+        const column_scheme = make_scheme(header, data);
+        
+        var id1 = "testGrid";
+        window.f = new footloosegrid(id1, config1, column_scheme);
+        f.Create_grid();
+        f.Load_data(data, undefined, undefined, true);
+    });
+
+  });    // end of document ready
+
+  const is_number_str = (() => {
+    const reg = /^\s*-?\d+(?:\.\d+)?\s*$/;
+    return (str) => reg.test(str);
+  })();
+  
+  const is_empty_str = (() => {
+    const reg = /^\s*$/;
+    return (str) => reg.test(str);
+  })();
+  
+  function make_scheme (header, data) {
+    
+    // label 을 수집한다.
+    const labels = _.unzip(header)
+     .reduce((before, curr, i) => {
+          if(is_empty_str(curr[0]))
+            curr[0] = before[before.length - 1][0];
+
+          before.push(curr);
+          return before;
+     }, [])
+     .map((col) => col.join('||'));
+    
+    const types = _.unzip(data).map((col) => {
+      const sample = col.filter((txt) => (txt != null && !is_empty_str(txt)))[0];
+      return is_number_str(sample) ? 'number' : 'str';
+    });
+    
+    const scheme = labels.map((label, i) => {
+          const column = {
+            name: 'col' + i,
+            type: types[i],
+            width: 150,
+            label,
+          };
+          return column;
+    });
+
+    return scheme;
+  }
+
+  
+
+</script>
+</head>
+<body>
+  <div id="testGrid"></div>
+</body>
+</html>
