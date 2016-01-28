@@ -5,8 +5,6 @@
 <title>Grid 테스트</title>
 <link rel="stylesheet" type="text/css" href="../css/footloosegrid.4.css">
 <link rel="stylesheet" type="text/css" href="../css/jquery-ui.css">
-<style type="text/css"> </style>
-
 <script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
 <script src="../lib/underscore-min.js"></script>
 <script src="../lib/jquery-1.11.3.min.js"></script>
@@ -17,85 +15,206 @@
 <script src="../footloosegrid.4.js"></script>
 <script type="text/javascript">
 
-  $(document).ready(function(){
+/**
+ * tsv 파일을 2차원 array 로 리턴한다
+ */
+function tsv_to_array (data) {
+  return data.split('\n').map((row) => row.split('\t'));
+}
 
-    var config1 = {
-      calc_row          : 'top',
-      cols_show         : 11,
-      fixed_header      : 1,
-      save_original_data: true,
-      save_deleted_data : true,
-      checkbox_size     : 20,
-      use_filter_div    : true,
-      use_filter_panel  : true,
-      use_sort_panel    : true,
-      search_by_reg_exp : true,
-    };
+/**
+ * 문자열이 숫자 형식인지 판별한다
+ */
+const is_number_str = (() => {
+  const reg = /^\s*-?\d+(?:\.\d+)?\s*$/;
+  return (str) => reg.test(str);
+})();
 
+/**
+ * 공백 문자열인지, 길이가 0 인 문자열인지 판별한다
+ */
+const is_empty_str = (() => {
+  const reg = /^\s*$/;
+  return (str) => reg.test(str);
+})();
 
-    var url = 'https://docs.google.com/spreadsheets/d/1CZhnZX_y7ynsSNfDhxNnrp0ObJLQ2_GyDnIL5vR0wrY/pub?gid=425043933&single=true&output=tsv';
-    $.ajax(url).done(function(result){
-        const r_data = result.split('\n').map((row) => row.split('\t'));
-        
-        const header = r_data.filter((row) => row[0] === 'header');
-        const data   = r_data.filter((row) => row[0] !== 'header');
-        
-        const column_scheme = make_scheme(header, data);
-        
-        var id1 = "testGrid";
-        window.f = new footloosegrid(id1, config1, column_scheme);
-        f.Create_grid();
-        f.Load_data(data, undefined, undefined, true);
-    });
-
-  });    // end of document ready
-
-  const is_number_str = (() => {
-    const reg = /^\s*-?\d+(?:\.\d+)?\s*$/;
-    return (str) => reg.test(str);
-  })();
+/**
+ * header label array 와 data array 를 토대로 footloosegrid 의 scheme 을 생성한다
+ */
+function make_scheme (header, data) {
   
-  const is_empty_str = (() => {
-    const reg = /^\s*$/;
-    return (str) => reg.test(str);
-  })();
-  
-  function make_scheme (header, data) {
-    
-    // label 을 수집한다.
-    const labels = _.unzip(header)
-     .reduce((before, curr, i) => {
-          if(is_empty_str(curr[0]))
-            curr[0] = before[before.length - 1][0];
+  const labels = _.unzip(header).reduce((before, curr, i) => {
 
-          before.push(curr);
-          return before;
-     }, [])
-     .map((col) => col.join('||'));
-    
-    const types = _.unzip(data).map((col) => {
+        if(is_empty_str(curr[0])) curr[0] = before[before.length - 1][0];
+
+        before.push(curr);
+        return before;
+   }, [])
+   .map((col) => col.join('||'));
+  
+  const types = _.unzip(data).map((col) => {
       const sample = col.filter((txt) => (txt != null && !is_empty_str(txt)))[0];
       return is_number_str(sample) ? 'number' : 'str';
-    });
+  });
+  return labels.map((label, i) => ({ name: 'col' + i, type: types[i], width: 90, label, }));
+}
+
+/**
+ * main
+ */
+$(document).ready(function(){
+
+  const url = 'https://docs.google.com/spreadsheets/d/1CZhnZX_y7ynsSNfDhxNnrp0ObJLQ2_GyDnIL5vR0wrY/pub?gid=425043933&single=true&output=tsv';
+  $.ajax(url).done(main_proc);
+
+  function main_proc(result){
+
+    const r_data  = tsv_to_array(result);
+    const header  = r_data.filter((row) => row[0] === 'header');
+    const data    = r_data.filter((row) => row[0] !== 'header');
+    const config1 = {
+        cols_show         : 15,
+        rows_show         : 10,
+        fixed_header      : 1,
+        use_filter_div    : true,
+        use_filter_panel  : true,
+        search_by_reg_exp : true,
+    };
+    const scheme = make_scheme(header, data);
+
+    window.f = new footloosegrid('testGrid', config1, scheme)
+                   .Create_grid()
+                   .Load_data(data, undefined, undefined, true);
     
-    const scheme = labels.map((label, i) => {
-          const column = {
-            name: 'col' + i,
-            type: types[i],
-            width: 150,
-            label,
-          };
-          return column;
-    });
-
-    return scheme;
+    init_graph(undefined, undefined, 2, 0);
+    f.attatch_click_event(update_graph);
   }
+  function init_graph(e, row, col, val, _this)  {
 
+      if(!_.isNumber(val)) return;
+
+      const graph_id   = '#graph1';
+      const column_ind = col;
+      show_graph(graph_id, f, column_ind);
+  }
   
+  function update_graph(e, row, col, val, _this) {
+    
+      if(!_.isNumber(val)) return;
+
+      const column_ind = col;
+      const graph_id   = '#graph1';
+      const title      = f.scheme[column_ind].label.replace('\|\|', ' ');
+      const dataset    = _.pluck(_this.data, column_ind).reverse();
+      const width   = _this.cfg.left_width + _this.cfg.right_width_show;
+      const height  = 100;
+
+      $('#graph_title').empty().text(title);
+      
+      // scale update
+      const xScale  = d3.scale.ordinal()
+                    .domain(d3.range(dataset.length))
+                    .rangeRoundBands([0, width], 0.05);
+      const yScale  = d3.scale.linear()
+                    .domain([d3.min(dataset) - 5, d3.max(dataset)])
+                    .range([0, height]);
+      
+    var bars = svg.selectAll("rect")  // 모든 rect 를 선택한다 ( 아직 존재하지 않는다 )
+          .data(dataset);  // 선택물에 데이터를 엮는다. ( 데이터가 갱신된 선택물이 리턴된다. )
+    
+    // 부족한 막대를 만든다.
+    bars.enter()       // 부족한 선택물을 추출한다. 즉, 20 개의 플레이스 홀더 문서요소다.
+      .append("rect")  // 각 플레이스 홀더에 rect 를 생성한다.
+      .attr("x", width)  // 새로운 rect 의 x 위치를 SVG 바깥쪽 위치로 설정하고 있다?! -> 보이지 않는 곳에 생성하고 가져올 예정.
+      .attr("y", function(d) {  return height - yScale(d);})
+      .attr("width", xScale.rangeBand())
+      .attr("height", function(d) {return yScale(d);})
+      .attr("fill", function(d) {return "rgb(0, 0, " + (d * 10) + ")";});
+
+    //Update
+    bars.transition()
+      .duration(500)
+      .attr("x", function(d, i) {  return xScale(i); })
+      .attr("y", function(d) {return height - yScale(d); })
+      .attr("width", xScale.rangeBand())
+      .attr("height", function(d) {return yScale(d); });
+
+    svg.selectAll("text")
+       .data(dataset)
+       .transition()
+       .duration(500)
+       .text(function(d) { return d; })
+       .attr("x", function(d, i) { return xScale(i) + xScale.rangeBand() / 2; })
+       .attr("y", function(d) { return height - yScale(d) + 14; });
+      
+  }
+});
+
+/**
+ * 그래프를 갱신한다.
+ */
+function show_graph(id, grid, column_ind) {
+
+  const dataset = _.pluck(grid.data, column_ind).reverse();
+  const title   = f.scheme[column_ind].label.replace('\|\|', ' ');
+  const width   = grid.cfg.left_width + grid.cfg.right_width_show;
+  const height  = 100;
+  const xScale  = d3.scale.ordinal()
+                    .domain(d3.range(dataset.length))
+                    .rangeRoundBands([0, width], 0.05);
+  const yScale  = d3.scale.linear()
+                    .domain([d3.min(dataset) - 5, d3.max(dataset)])
+                    .range([0, height]);
+
+  // 표시 영역 삭제
+  $(id).empty();
+  $('#graph_title').empty().text(title);
+
+  window.svg = d3.select(id).append("svg")
+                 .attr({width, height});
+
+  // 막대그래프
+  const bars = svg.selectAll("rect").data(dataset)
+
+  bars.enter()
+     .append("rect")
+     .attr("x", (d, i) => xScale(i) )
+     .attr("y", (d)    => (height - yScale(d)) )
+     .attr("width", xScale.rangeBand())
+     .attr("height", (d) => yScale(d) ) // d 값에 따라 막대그래프의 길이가 바뀐다.
+     .attr("column", (d) => column_ind)
+     .attr("index",  (d, i) => (i))
+     .attr("fill",   (d) => ("rgb(0, 0, " + (parseInt(yScale(d),10) * 2) + ")") );   // d 값에 따라 색깔이 바뀐다.
+     
+   bars
+     .on("mouseover", function() { d3.select(this).attr("fill", "orange"); })
+     .on("mouseout", function(d) {
+        d3.select(this).transition().duration(150) 
+          .attr("fill", "rgb(0, 0, " + (parseInt(yScale(d),10) * 2) + ")");
+      })
+     .on("click", (d) => { console.log(d); })
+     ;
+
+  // 레이블
+  svg.selectAll("text")
+     .data(dataset)
+     .enter()
+     .append("text")
+     .text((d) => d)
+     .attr("text-anchor", "middle")
+     .attr("x", (d, i) => { return xScale(i) + xScale.rangeBand() / 2; })
+     .attr("y", (d)    => { return height - yScale(d) + 14; })
+     .attr("font-family", "sans-serif")
+     .attr("font-size", "11px")
+     .attr("fill", "white");
+}
 
 </script>
 </head>
 <body>
+  <div id="graph_title"></div>
+  <br>
+  <div id="graph1"></div>
   <div id="testGrid"></div>
 </body>
 </html>
