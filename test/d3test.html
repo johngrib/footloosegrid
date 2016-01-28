@@ -63,151 +63,140 @@ function make_scheme (header, data) {
  * main
  */
 $(document).ready(function(){
-
-  const url = 'https://docs.google.com/spreadsheets/d/1CZhnZX_y7ynsSNfDhxNnrp0ObJLQ2_GyDnIL5vR0wrY/pub?gid=425043933&single=true&output=tsv';
-  $.ajax(url).done(main_proc);
-
-  function main_proc(result){
-
-    const r_data  = tsv_to_array(result);
-    const header  = r_data.filter((row) => row[0] === 'header');
-    const data    = r_data.filter((row) => row[0] !== 'header');
-    const config1 = {
+  
+  const graph = {
+      id    : '#graph1',
+      $obj  : null,
+      $title: $('#graph_title'),
+      svg   : null,
+      width : null,
+      height: 100,
+  };
+  graph.$obj = $(graph.id);
+  
+  const grid = {
+      $obj  : null,
+      cfg   : {
         cols_show         : 15,
         rows_show         : 10,
         fixed_header      : 1,
         use_filter_div    : true,
         use_filter_panel  : true,
         search_by_reg_exp : true,
-    };
+      },
+  }
+
+  const url = 'https://docs.google.com/spreadsheets/d/1CZhnZX_y7ynsSNfDhxNnrp0ObJLQ2_GyDnIL5vR0wrY/pub?gid=425043933&single=true&output=tsv';
+  $.ajax(url).done(main_proc);
+
+  function main_proc(result){
+
+    const r_data = tsv_to_array(result);
+    const header = r_data.filter((row) => row[0] === 'header');
+    const data   = r_data.filter((row) => row[0] !== 'header');
     const scheme = make_scheme(header, data);
 
-    window.f = new footloosegrid('testGrid', config1, scheme)
-                   .Create_grid()
-                   .Load_data(data, undefined, undefined, true);
+    grid.$obj = new footloosegrid('testGrid', grid.cfg, scheme)
+        .Create_grid()
+        .Load_data(data, undefined, undefined, true);
     
-    init_graph(undefined, undefined, 2, 0);
-    f.attatch_click_event(update_graph);
+    graph.width = grid.$obj.cfg.left_width + grid.$obj.cfg.right_width_show;
+
+    // graph 생성
+    init_graph(null, null, 2, 0, grid.$obj, true);
+
+    // click event 부여
+    grid.$obj.attatch_click_event( init_graph );
   }
-  function init_graph(e, row, col, val, _this)  {
 
-      if(!_.isNumber(val)) return;
+  // d3 graph 를 초기화한다.
+  function init_graph(e, row, col, val, _this, is_init)  {
 
-      const graph_id   = '#graph1';
-      const column_ind = col;
-      show_graph(graph_id, f, column_ind);
+    if(!_.isNumber(val))
+      return;
+
+    if(is_init)
+      graph.svg = d3.select(graph.id).append("svg")
+                    .attr({width: graph.width, height: graph.height });
+
+    const title   = _this.scheme[col].label.replace('\|\|', ' ');
+    const dataset = _.pluck(_this.data, col).reverse();
+    const bars    = graph.svg.selectAll("rect").data(dataset)
+    const xScale  = d3.scale.ordinal()
+                      .domain(d3.range(dataset.length))
+                      .rangeRoundBands([0, graph.width], 0.05);
+    const yScale  = d3.scale.linear()
+                    .domain([d3.min(dataset) - 5, d3.max(dataset)])
+                    .range([0, graph.height]);
+    graph.$title.text(title);
+
+    if(is_init)
+      create_graph(bars, xScale, yScale, col, dataset);
+    else
+      update_graph(bars, xScale, yScale, col, dataset);
+
+    event_bind_graph(bars, xScale, yScale, col, dataset);
   }
   
-  function update_graph(e, row, col, val, _this) {
-    
-      if(!_.isNumber(val)) return;
-
-      const column_ind = col;
-      const graph_id   = '#graph1';
-      const title      = f.scheme[column_ind].label.replace('\|\|', ' ');
-      const dataset    = _.pluck(_this.data, column_ind).reverse();
-      const width   = _this.cfg.left_width + _this.cfg.right_width_show;
-      const height  = 100;
-
-      $('#graph_title').empty().text(title);
-      
-      // scale update
-      const xScale  = d3.scale.ordinal()
-                    .domain(d3.range(dataset.length))
-                    .rangeRoundBands([0, width], 0.05);
-      const yScale  = d3.scale.linear()
-                    .domain([d3.min(dataset) - 5, d3.max(dataset)])
-                    .range([0, height]);
-      
-    var bars = svg.selectAll("rect")  // 모든 rect 를 선택한다 ( 아직 존재하지 않는다 )
-          .data(dataset);  // 선택물에 데이터를 엮는다. ( 데이터가 갱신된 선택물이 리턴된다. )
-    
-    // 부족한 막대를 만든다.
-    bars.enter()       // 부족한 선택물을 추출한다. 즉, 20 개의 플레이스 홀더 문서요소다.
-      .append("rect")  // 각 플레이스 홀더에 rect 를 생성한다.
-      .attr("x", width)  // 새로운 rect 의 x 위치를 SVG 바깥쪽 위치로 설정하고 있다?! -> 보이지 않는 곳에 생성하고 가져올 예정.
-      .attr("y", function(d) {  return height - yScale(d);})
-      .attr("width", xScale.rangeBand())
-      .attr("height", function(d) {return yScale(d);})
-      .attr("fill", function(d) {return "rgb(0, 0, " + (d * 10) + ")";});
-
-    //Update
-    bars.transition()
-      .duration(500)
-      .attr("x", function(d, i) {  return xScale(i); })
-      .attr("y", function(d) {return height - yScale(d); })
-      .attr("width", xScale.rangeBand())
-      .attr("height", function(d) {return yScale(d); });
-
-    svg.selectAll("text")
-       .data(dataset)
-       .transition()
-       .duration(500)
-       .text(function(d) { return d; })
-       .attr("x", function(d, i) { return xScale(i) + xScale.rangeBand() / 2; })
-       .attr("y", function(d) { return height - yScale(d) + 14; });
-      
-  }
-});
-
-/**
- * 그래프를 갱신한다.
- */
-function show_graph(id, grid, column_ind) {
-
-  const dataset = _.pluck(grid.data, column_ind).reverse();
-  const title   = f.scheme[column_ind].label.replace('\|\|', ' ');
-  const width   = grid.cfg.left_width + grid.cfg.right_width_show;
-  const height  = 100;
-  const xScale  = d3.scale.ordinal()
-                    .domain(d3.range(dataset.length))
-                    .rangeRoundBands([0, width], 0.05);
-  const yScale  = d3.scale.linear()
-                    .domain([d3.min(dataset) - 5, d3.max(dataset)])
-                    .range([0, height]);
-
-  // 표시 영역 삭제
-  $(id).empty();
-  $('#graph_title').empty().text(title);
-
-  window.svg = d3.select(id).append("svg")
-                 .attr({width, height});
-
-  // 막대그래프
-  const bars = svg.selectAll("rect").data(dataset)
-
-  bars.enter()
+  function create_graph(bars, xScale, yScale, col, dataset){
+    bars.enter()
      .append("rect")
-     .attr("x", (d, i) => xScale(i) )
-     .attr("y", (d)    => (height - yScale(d)) )
-     .attr("width", xScale.rangeBand())
-     .attr("height", (d) => yScale(d) ) // d 값에 따라 막대그래프의 길이가 바뀐다.
-     .attr("column", (d) => column_ind)
-     .attr("index",  (d, i) => (i))
-     .attr("fill",   (d) => ("rgb(0, 0, " + (parseInt(yScale(d),10) * 2) + ")") );   // d 값에 따라 색깔이 바뀐다.
+     .attr({
+         index : (d, i) => i,
+         x     : (d, i) => xScale(i),
+         y     : (d)    => (graph.height - yScale(d)),
+         width : xScale.rangeBand(),
+         height: (d) => yScale(d),
+         column: (d) => col,
+         fill  : (d) => ("rgb(0, 0, " + (parseInt(yScale(d),10) * 2) + ")"),
+     });
      
-   bars
-     .on("mouseover", function() { d3.select(this).attr("fill", "orange"); })
-     .on("mouseout", function(d) {
-        d3.select(this).transition().duration(150) 
-          .attr("fill", "rgb(0, 0, " + (parseInt(yScale(d),10) * 2) + ")");
-      })
-     .on("click", (d) => { console.log(d); })
-     ;
-
-  // 레이블
-  svg.selectAll("text")
+    graph.svg.selectAll("text")
      .data(dataset)
      .enter()
      .append("text")
      .text((d) => d)
-     .attr("text-anchor", "middle")
-     .attr("x", (d, i) => { return xScale(i) + xScale.rangeBand() / 2; })
-     .attr("y", (d)    => { return height - yScale(d) + 14; })
-     .attr("font-family", "sans-serif")
-     .attr("font-size", "11px")
-     .attr("fill", "white");
-}
+     .attr({
+       x : (d, i) => (xScale(i) + xScale.rangeBand() / 2),
+       y : (d)    => (graph.height - yScale(d) + 14),
+       'text-anchor': 'middle',
+       'font-family': 'sans-serif',
+       'font-size'  : '11px',
+       'fill'       : 'white',
+     });
+  }
+  
+  function update_graph(bars, xScale, yScale, col, dataset) {
+
+    graph.svg.selectAll("text")
+       .data(dataset)
+       .transition()
+       .duration(500)
+       .text((d) => d)
+       .attr({
+         y : (d)    => (graph.height - yScale(d) + 14),
+       });
+      
+    bars.transition()
+      .duration(500)
+      .attr({
+        y     : (d) => (graph.height - yScale(d)),
+        height: (d) => yScale(d),
+        fill  : (d) => ("rgb(0, 0, " + (parseInt(yScale(d),10) * 2) + ")"),
+      });
+  }
+  
+  function event_bind_graph(bars, xScale, yScale, col, dataset) {
+   bars
+     .on("mouseover", function() { d3.select(this).attr("fill", "orange"); })
+     .on("mouseout", function(d) {
+        d3.select(this)
+          .transition().duration(150) 
+          .attr("fill", "rgb(0, 0, " + (parseInt(yScale(d),10) * 2) + ")");
+      })
+     .on("click", (d) => { console.log(d); });
+  }
+});
 
 </script>
 </head>
