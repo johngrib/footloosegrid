@@ -2763,7 +2763,7 @@ FGR.prototype.Add_row = function(number, row_index){
  * @param callback
  * @returns {FGR}
  */
-FGR.prototype.Load_data = function(data, callback, filter){
+FGR.prototype.Load_data = function(data, callback, filter, is_use_caster){
 
   var _this = this;
   
@@ -2789,7 +2789,17 @@ FGR.prototype.Load_data = function(data, callback, filter){
 
     // A. 2 dimention Array 의 경우
     if(Array.isArray(data) && Array.isArray(data[0])) {
-      temp_data = data;
+      
+      if(is_use_caster){
+        temp_data = data.map((row) => {
+          return row.map((col, j) => {
+            const column = _this.scheme[j];
+            return column.input_caster ? column.input_caster(col) : col;
+          });
+        });
+      } else {
+        temp_data = data;
+      }
 
     // B. JSON Array 의 경우 (아마도 가장 일반적인 경우)
     } else if(Array.isArray(data) && _.isObject(data[0])){
