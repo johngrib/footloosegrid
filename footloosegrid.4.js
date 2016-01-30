@@ -1320,6 +1320,8 @@ function _attatch_evt_wheel(_this){
  */
 function _attatch_evt_excel(_this){
 
+  if(window.XLSX === undefined || window.jszip === undefined) return;
+
   // 드래그 오버 이벤트 처리
   function handleDragover(e) {
     e.stopPropagation();
