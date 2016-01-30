@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>Grid 테스트</title>
+<link rel="stylesheet" type="text/css" href="../css/footloosegrid.4.css">
+<link rel="stylesheet" type="text/css" href="../css/jquery-ui.css">
+<style type="text/css"> </style>
+<script src="../lib/underscore-min.js"></script>
+<script src="../lib/jquery-1.11.3.min.js"></script>
+<script src="../lib/jquery-ui.min.js"></script>
+<script src="../lib/FileSaver.min.js"></script>
+ <script src="../footloosegrid.4.js"></script>
+<script type="text/javascript">
+
+  // sample data 생성 규칙 정의
+  const data_generate = {
+    str       : function(i,j){return 'test' + i + '-' + j;},
+    str2      : function(i,j){return 'test' + i + '-' + j;},
+    number    : function(i,j){return i * 100 + j;},
+    check     : function(i,j){return i & 2;},
+    radio     : function(i,j){return (i === 0) ? 1 : 0;},
+    select    : function(i,j){return (i & 1 === 1) ? 'yes':'no';},
+    gen_label : function(i,j){return 'test' + i + '-' + j;},
+    date      : function(i,j){return $.datepicker.formatDate( "yy-mm-dd", new Date(86400000 * i));},
+    gen       : function(i,j){return 1;}
+  };
+  data_generate.free = data_generate.number;
+  data_generate.img  = data_generate.number;
+  
+  $(document).ready(function(){
+
+    const config1 = {
+      calc_row          : 'top',
+      cols_show         : 11,    // 한 페이지에 보여줄 col 의 수 (테이블 전체 width 자동 조정: 왼쪽 col 부터 계산)
+      fixed_header      : 4,     // 좌측 틀고정 컬럼 수
+      save_original_data: true,  // 원본 데이터를 보관한다
+      save_deleted_data : true,  // 삭제된 데이터를 보관한다
+      checkbox_size     : 20,
+      use_filter_div    : true,
+      use_filter_panel  : true,
+      use_sort_panel    : true,
+      search_by_reg_exp : true,
+      date : {
+        dateFormat : 'yy-mm-dd',
+        yearRange  : 'c-10:c+10'
+      },
+    };
+    
+    function img_selector (value) {
+      if(value === null){
+        return '';
+      } else if(parseInt(value/100, 10) % 3 === 0) {
+        return 'url(../css/images/red.png)';
+      } else if(parseInt(value/100, 10) % 4 === 0) {
+        return 'url(../css/images/blue.png)';
+      } else {
+        return '';
+      }
+    };
+
+    const column_scheme1 = [
+      {name:'col0', type:'check', width: 100, align:'center', resize: true, label: '체크||&checkbox'},
+      {name:'col1', type:'radio', width: 100, align:'center', resize: true, label: '라디오||&radio'},
+      {name:'col2', type:'str',   width: 100, edit : false,   resize: true, label: '셀병합 테스트||왼쪽정렬'},
+      {name:'col3', type:'str',   width: 100, align:'right',  resize: true, label: '셀병합 테스트||오른쪽정렬'},
+      {name:'col4', type:'number',width: 150, calc_row: 'avg',calc_title: '평균 :', format: '##.###', resize: {min:30, max: 200}, label:'sort'},
+      {name:'col5', type:'number',width: 150, calc_row: 'sum',calc_title: '합계 :', edit: false, label:'셀병합||1||숫자 sort'},
+      {name:'col6', type:'str',   width: 130, size: 19,       label:'셀병합||2||문자열 sort'},
+      {name:'col7', type:'date',  width: 150, align:'center', edit: true, resize:true, label:'셀병합||2||Date 형식'},
+      {name:'col8', type:'str',   width: 130, align:'center', label:'테스트||가운데 정렬'},
+      {name:'col9', type:'number',width: 150, align:'left',   calc_row: 'max', calc_title:'MAX :',   label:'최대값 calc'},
+      {name:'col10',type:'number',width: 150, align:'center', calc_row: 'min', calc_title:'MIN :', label:'최소값'},
+      {name:'col11',type:'str',   width: 150, align:'right',  label:'셀병합 테스트'},
+      {name:'col12',type:'str',   width: 150, align:'right',  label:'셀병합 테스트'},
+      {name:'col13',type:'img',   width: 100, align:'center', resize: true, rule  : img_selector, label:'기타'}
+    ];
+
+    const id1 = "testGrid";
+
+    window.f = new footloosegrid(id1, config1, column_scheme1);
+    f.Create_grid();
+    
+    const sample_data = generate_sample_data2(20000, column_scheme1);
+
+    $('#btn_create1').click(function(){ create(id1, config1, column_scheme1); });
+
+    function loading (s_data){
+      time_start('loading');
+      f.Load_data(s_data, function callback () {
+        $('#status').text('loaded : ' + time_end('loading') + ' ms');
+      });
+    }
+
+    $('#btn_load1').click(loading.bind(null,sample_data));
+
+    // 2차원 배열 형태 샘플 데이터 생성기
+    function generate_sample_data2(row_num, scheme){
+      var data = [], row, i;
+
+      function new_row (j,v){ row.push(  data_generate[v.type](i,j)  ); }
+      
+      for(i = 0; i < row_num; ++i){
+        row = [];
+        $.each(scheme, new_row);
+        data.push(row);
+      }
+      return data;
+    }
+
+    $('#down_csv').click(function(){
+      const data = f.data.map(function(row){
+        return row.join(',') + '\n';
+      });
+      const blob = new Blob(data, {type: "text/plain;charset=utf-8"});
+      saveAs(blob, 'test.csv');
+    });
+  });  // end of document ready
+
+</script>
+</head>
+<body>
+<div id="testGrid"></div>
+<div id="status" style='height:20px;'></div>
+<button id="btn_load1">Data Load</button>
+<button id="down_csv">Download csv file</button>
+</body>
+</html>
