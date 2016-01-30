@@ -19,23 +19,24 @@
  * tsv 파일을 2차원 array 로 리턴한다
  */
 function tsv_to_array (data) {
-  return data.split('\n').map((row) => row.split('\t'));
+  console.log(data.split('\n').map)
+  return data.split('\n').map(function(row) { return row.split('\t') });
 }
 
 /**
  * 문자열이 숫자 형식인지 판별한다
  */
-const is_number_str = (() => {
+const is_number_str = (function() {
   const reg = /^\s*-?\d+(?:\.\d+)?\s*$/;
-  return (str) => reg.test(str);
+  return function(str) { return reg.test(str) };
 })();
 
 /**
  * 공백 문자열인지, 길이가 0 인 문자열인지 판별한다
  */
-const is_empty_str = (() => {
+const is_empty_str = (function() {
   const reg = /^\s*$/;
-  return (str) => reg.test(str);
+  return function(str) { return reg.test(str) };
 })();
 
 /**
@@ -43,7 +44,7 @@ const is_empty_str = (() => {
  */
 function make_scheme (header, data) {
   
-  const labels = _.unzip(header).reduce((before, curr, i) => {
+  const labels = _.unzip(header).reduce(function (before, curr, i) {
 
         if(is_empty_str(curr[0])) curr[0] = before[before.length - 1][0];
 
@@ -52,11 +53,11 @@ function make_scheme (header, data) {
    }, [])
    .map((col) => col.join('||'));
   
-  const types = _.unzip(data).map((col) => {
-      const sample = col.filter((txt) => (txt != null && !is_empty_str(txt)))[0];
+  const types = _.unzip(data).map(function (col) {
+      const sample = col.filter(function (txt) { return (txt != null && !is_empty_str(txt)) })[0];
       return is_number_str(sample) ? 'number' : 'str';
   });
-  return labels.map((label, i) => ({ name: 'col' + i, type: types[i], width: 90, label, }));
+  return labels.map(function(label, i) { return ({ name: 'col' + i, type: types[i], width: 90, label, }) });
 }
 
 /**
@@ -86,7 +87,8 @@ $(document).ready(function(){
       },
   }
 
-  const url = 'https://docs.google.com/spreadsheets/d/1CZhnZX_y7ynsSNfDhxNnrp0ObJLQ2_GyDnIL5vR0wrY/pub?gid=425043933&single=true&output=tsv';
+  //const url = 'https://docs.google.com/spreadsheets/d/1CZhnZX_y7ynsSNfDhxNnrp0ObJLQ2_GyDnIL5vR0wrY/pub?gid=425043933&single=true&output=tsv';
+  const url = 'https://johngrib.github.io/footloosegrid/data/inbody2015.tsv';
   $.ajax(url).done(main_proc);
 
   function main_proc(result){
@@ -142,23 +144,23 @@ $(document).ready(function(){
     bars.enter()
      .append("rect")
      .attr({
-         index : (d, i) => i,
-         x     : (d, i) => xScale(i),
-         y     : (d)    => (graph.height - yScale(d)),
+         index : function(d, i) { return i },
+         x     : function(d, i) { return xScale(i) },
+         y     : function(d)    { return (graph.height - yScale(d)) },
          width : xScale.rangeBand(),
-         height: (d) => yScale(d),
-         column: (d) => col,
-         fill  : (d) => ("rgb(0, 0, " + (parseInt(yScale(d),10) * 2) + ")"),
+         height: function(d) { return yScale(d) },
+         column: function(d) { return col },
+         fill  : function(d) { return ("rgb(0, 0, " + (parseInt(yScale(d),10) * 2) + ")") },
      });
      
     graph.svg.selectAll("text")
      .data(dataset)
      .enter()
      .append("text")
-     .text((d) => d)
+     .text(function(d) { return d })
      .attr({
-       x : (d, i) => (xScale(i) + xScale.rangeBand() / 2),
-       y : (d)    => (graph.height - yScale(d) + 14),
+       x : function(d, i) { return (xScale(i) + xScale.rangeBand() / 2) },
+       y : function(d)    { return (graph.height - yScale(d) + 14) },
        'text-anchor': 'middle',
        'font-family': 'sans-serif',
        'font-size'  : '11px',
@@ -172,17 +174,17 @@ $(document).ready(function(){
        .data(dataset)
        .transition()
        .duration(500)
-       .text((d) => d)
+       .text(function(d) { return d })
        .attr({
-         y : (d)    => (graph.height - yScale(d) + 14),
+         y : function(d) { return (graph.height - yScale(d) + 14) },
        });
       
     bars.transition()
       .duration(500)
       .attr({
-        y     : (d) => (graph.height - yScale(d)),
-        height: (d) => yScale(d),
-        fill  : (d) => ("rgb(0, 0, " + (parseInt(yScale(d),10) * 2) + ")"),
+        y     : function(d) { return (graph.height - yScale(d))},
+        height: function(d) { return yScale(d)},
+        fill  : function(d) { return ("rgb(0, 0, " + (parseInt(yScale(d),10) * 2) + ")")},
       });
   }
   
@@ -194,7 +196,7 @@ $(document).ready(function(){
           .transition().duration(150) 
           .attr("fill", "rgb(0, 0, " + (parseInt(yScale(d),10) * 2) + ")");
       })
-     .on("click", (d) => { console.log(d); });
+     .on("click", function(d) { return console.log(d); });
   }
 });
 
