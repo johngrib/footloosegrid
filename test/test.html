@@ -6,17 +6,17 @@
 <link rel="stylesheet" type="text/css" href="../css/footloosegrid.4.css">
 <link rel="stylesheet" type="text/css" href="../css/jquery-ui.css">
 <style type="text/css">
-	button[id^=btn_create]	{ color:#1F45FC; }
-	button[id^=btn_load]	{ color:red; }
-	
-	#drop{
-	    border:2px dashed #bbb;
-	    -moz-border-radius:5px;
-	    -webkit-border-radius:5px;
-	    border-radius:5px;
-	    padding:25px;
-	    text-align:center;
-	    font:20pt bold,"Vollkorn";color:#bbb
+  button[id^=btn_create]  { color:#1F45FC; }
+  button[id^=btn_load]  { color:red; }
+  
+  #drop{
+      border:2px dashed #bbb;
+      -moz-border-radius:5px;
+      -webkit-border-radius:5px;
+      border-radius:5px;
+      padding:25px;
+      text-align:center;
+      font:20pt bold,"Vollkorn";color:#bbb
     }
 
 </style>
@@ -29,106 +29,106 @@
 <script src="../footloosegrid.4.js"></script>
 <script type="text/javascript">
 
-	// sample data 생성 규칙 정의
-	var data_generate = {
-		str       : function(i,j){return 'test' + i + '-' + j;},
-		str2      : function(i,j){return 'test' + i + '-' + j;},
-		number    : function(i,j){return i * 100 + j;},
-		check     : function(i,j){return i & 2;},
-		radio     : function(i,j){return (i === 0) ? 1 : 0;},
-		select    : function(i,j){return (i & 1 === 1) ? 'yes':'no';},
-		gen_label : function(i,j){return 'test' + i + ',' + j;},
-		date      : function(i,j){return $.datepicker.formatDate( "yy-mm-dd", new Date(86400000 * i));},
-		gen       : function(i,j){return 1;}
-	};
-	data_generate.free = data_generate.number;
-	data_generate.img  = data_generate.number;
-	
-	var grid_type = 'normal';
+  // sample data 생성 규칙 정의
+  var data_generate = {
+    str       : function(i,j){return 'test' + i + '-' + j;},
+    str2      : function(i,j){return 'test' + i + '-' + j;},
+    number    : function(i,j){return i * 100 + j;},
+    check     : function(i,j){return i & 2;},
+    radio     : function(i,j){return (i === 0) ? 1 : 0;},
+    select    : function(i,j){return (i & 1 === 1) ? 'yes':'no';},
+    gen_label : function(i,j){return 'test' + i + ',' + j;},
+    date      : function(i,j){return $.datepicker.formatDate( "yy-mm-dd", new Date(86400000 * i));},
+    gen       : function(i,j){return 1;}
+  };
+  data_generate.free = data_generate.number;
+  data_generate.img  = data_generate.number;
+  
+  var grid_type = 'normal';
 
-	$(document).ready(function(){
+  $(document).ready(function(){
 
-		var config1 = {
-			drill_down	 : true,	// 드릴 다운 방식은 상위 계층일수록 1에 가까운 generation 넘버 이용. oracle sql 의 level 방식, essbase 의 generation 방식
-			calc_row          : 'top',
-			cols_show         : 11,  	// 한 페이지에 보여줄 col 의 수 (테이블 전체 width 자동 조정: 왼쪽 col 부터 계산)
-			fixed_header      : 4,   	// 좌측 틀고정 컬럼 수
-			save_original_data: true,	// 원본 데이터를 보관한다
-			save_deleted_data : true,	// 삭제된 데이터를 보관한다
-			checkbox_size     : 20,
-			use_filter_div    : true,
-			use_filter_panel  : true,
-			use_sort_panel    : true,
-			search_by_reg_exp : true,
-			date : {
-				dateFormat : 'yy-mm-dd',
-				yearRange  : 'c-10:c+10'
-			}
-			//calc_row : 'bottom',
-			//search_replace    : true,
-			//paging : true             // paging 기능 사용 선언 및, 한 페이지의 row 수 정의
-		};
-		
-		var config2 = {
-			calc_row     : 'top',
-			drill_down	 : true,	// 드릴 다운 방식은 상위 계층일수록 1에 가까운 generation 넘버 이용. oracle sql 의 level 방식, essbase 의 generation 방식
-			cols_show    : 5,	// 한 페이지에 보여줄 col 의 수 (테이블 전체 width 자동 조정: 왼쪽 col 부터 계산)
-			fixed_header : 2	// 좌측 틀고정 컬럼 수
-		};
-		
+    var config1 = {
+      drill_down   : true,  // 드릴 다운 방식은 상위 계층일수록 1에 가까운 generation 넘버 이용. oracle sql 의 level 방식, essbase 의 generation 방식
+      calc_row          : 'top',
+      cols_show         : 11,    // 한 페이지에 보여줄 col 의 수 (테이블 전체 width 자동 조정: 왼쪽 col 부터 계산)
+      fixed_header      : 4,     // 좌측 틀고정 컬럼 수
+      save_original_data: true,  // 원본 데이터를 보관한다
+      save_deleted_data : true,  // 삭제된 데이터를 보관한다
+      checkbox_size     : 20,
+      use_filter_div    : true,
+      use_filter_panel  : true,
+      use_sort_panel    : true,
+      search_by_reg_exp : true,
+      date : {
+        dateFormat : 'yy-mm-dd',
+        yearRange  : 'c-10:c+10'
+      }
+      //calc_row : 'bottom',
+      //search_replace    : true,
+      //paging : true             // paging 기능 사용 선언 및, 한 페이지의 row 수 정의
+    };
+    
+    var config2 = {
+      calc_row     : 'top',
+      drill_down   : true,  // 드릴 다운 방식은 상위 계층일수록 1에 가까운 generation 넘버 이용. oracle sql 의 level 방식, essbase 의 generation 방식
+      cols_show    : 5,  // 한 페이지에 보여줄 col 의 수 (테이블 전체 width 자동 조정: 왼쪽 col 부터 계산)
+      fixed_header : 2  // 좌측 틀고정 컬럼 수
+    };
+    
 /*
-	column scheme
-		name    : form submit 시 사용되는 name. 조회 및 저장 시 사용.
-		label   : col_label 에 표시될 문자열. 컬럼의 이름.
-		type    : cell 의 타입. str, int, double, select, check	
-		h_align : 헤더 레이블 (컬럼명) 영역 가로 정렬
-		h_valign: 헤더 레이블 (컬럼명) 영역 세로 정렬
-		align   : 가로 정렬 
-		valign  : 세로 정렬
-		width   : col width
-		sort    : 정렬 기능 사용여부
-		edit    : 편집 가능 여부
+  column scheme
+    name    : form submit 시 사용되는 name. 조회 및 저장 시 사용.
+    label   : col_label 에 표시될 문자열. 컬럼의 이름.
+    type    : cell 의 타입. str, int, double, select, check  
+    h_align : 헤더 레이블 (컬럼명) 영역 가로 정렬
+    h_valign: 헤더 레이블 (컬럼명) 영역 세로 정렬
+    align   : 가로 정렬 
+    valign  : 세로 정렬
+    width   : col width
+    sort    : 정렬 기능 사용여부
+    edit    : 편집 가능 여부
 
-	type
-		str     : 기본형
-		number  : 숫자. 정수와 실수 모두 표현 가능
-		check   : 체크박스
-		select  : select box (combo)
-		gen     : 드릴다운 기능 사용시 generation 넘버를 표현
-		gen_label: 드릴다운 기능 사용시 드릴 다운 버튼과 함께 표현될 레이블
+  type
+    str     : 기본형
+    number  : 숫자. 정수와 실수 모두 표현 가능
+    check   : 체크박스
+    select  : select box (combo)
+    gen     : 드릴다운 기능 사용시 generation 넘버를 표현
+    gen_label: 드릴다운 기능 사용시 드릴 다운 버튼과 함께 표현될 레이블
 */
-		var opt_arr = [ {text: '',     value: ''   }, 
-		                {html: '예',   value: 'yes'}, 
-		                {text: '아니오',value: 'no' } ];
+    var opt_arr = [ {text: '',     value: ''   }, 
+                    {html: '예',   value: 'yes'}, 
+                    {text: '아니오',value: 'no' } ];
 
-	    var img_selector = function(value){ 
+      var img_selector = function(value){ 
 
-	    	if(value === null){
-	    		return '';
-	    	} else if(parseInt(value/100, 10) % 3 === 0) {
-				return 'url(../css/images/red.png)';
-			} else if(parseInt(value/100, 10) % 4 === 0) {
-				return 'url(../css/images/blue.png)';
-			} else {
-				return '';
-			}
-		};
+        if(value === null){
+          return '';
+        } else if(parseInt(value/100, 10) % 3 === 0) {
+        return 'url(../css/images/red.png)';
+      } else if(parseInt(value/100, 10) % 4 === 0) {
+        return 'url(../css/images/blue.png)';
+      } else {
+        return '';
+      }
+    };
 
-		var column_scheme1 = [
-              {name:'col0',  type:'check', width: 100,  align:'center',  h_align:'center', 	label: '체크||&checkbox', resize: true},
-              //{name:'col0',  type:'check', width: 100,  align:'center',  h_align:'center', 	label: '체크||&checkbox', resize: {min: 30, max: 200}},
-              {name:'col1',  type:'radio',  width: 100,  align:'center',  h_align:'center', 	label: '라디오||&radio', resize: true},
-              {name:'col2',  type:'str',    width: 100, valign:'top',  	label: '셀병합 테스트||왼쪽정렬', edit: false, resize: true},
-              {name:'col3',  type:'str',    width: 100, align:'right',	valign:'top',  		label: '셀병합 테스트||오른쪽정렬', resize: true},
+    var column_scheme1 = [
+              {name:'col0',  type:'check', width: 100,  align:'center',  h_align:'center',   label: '체크||&checkbox', resize: true},
+              //{name:'col0',  type:'check', width: 100,  align:'center',  h_align:'center',   label: '체크||&checkbox', resize: {min: 30, max: 200}},
+              {name:'col1',  type:'radio',  width: 100,  align:'center',  h_align:'center',   label: '라디오||&radio', resize: true},
+              {name:'col2',  type:'str',    width: 100, valign:'top',    label: '셀병합 테스트||왼쪽정렬', edit: false, resize: true},
+              {name:'col3',  type:'str',    width: 100, align:'right',  valign:'top',      label: '셀병합 테스트||오른쪽정렬', resize: true},
               {name:'col4',  type:'number', width: 150, h_align:'center',label:'sort',
                   sort: true, calc_row: 'avg', calc_title: '평균 : ', format: '##.###', resize: {min:30, max: 200}},
               {name:'col5',  type:'number', width: 150,  valign: 'top',   label:'셀병합||1||숫자 sort', 
                   sort: true, calc_row: 'sum', calc_title: '합계 : ', filter: true, edit: false},
               {name:'col6',  type:'str',    width: 130,  valign: 'top',   label:'셀병합||2||문자열 sort', 
                       sort: true, size: 19},
-              {name:'col7',  type:'date',   width: 150, h_align:'center',	label:'셀병합||2||Date 형식', edit: true, 
+              {name:'col7',  type:'date',   width: 150, h_align:'center',  label:'셀병합||2||Date 형식', edit: true, 
                       sort: true, resize:true},
-              {name:'col8',  type:'select', width: 90,  h_align:'center',option: opt_arr, 	label:'테스트||선택', resize:true},
+              {name:'col8',  type:'select', width: 90,  h_align:'center',option: opt_arr,   label:'테스트||선택', resize:true},
               {name:'col9',  type:'select', width: 90, option: opt_arr, label:'테스트||편집불가', edit: false},
               {name:'col10', type:'str',    width: 130,  align:'center', label:'테스트||가운데 정렬'},
               {name:'col11', type:'number', width: 150,  h_align:'left',  label:'최대값 calc', calc_row: 'max', calc_title:'MAX : '},
@@ -136,146 +136,146 @@
               {name:'col13', type:'str',    width: 150, align:'right',   label:'셀병합 테스트'},
               {name:'col14', type:'str',    width: 150, align:'right',   label:'셀병합 테스트'},
               {name:'col15', type:'img',   width: 100,  align:'center',  label:'기타', resize: true, rule  : img_selector},
-              {name:'gen',	type:'gen', 	  width: 100,  align:'center',  h_align: 'center', 	label: 'generation'},
-              {name:'label',type:'gen_label', width: 200,  align:'left',  	h_align: 'center', 	label: '레이블', resize: true}
+              {name:'gen',  type:'gen',     width: 100,  align:'center',  h_align: 'center',   label: 'generation'},
+              {name:'label',type:'gen_label', width: 200,  align:'left',    h_align: 'center',   label: '레이블', resize: true}
               // end of free type
         ];
-	
-		var column_scheme2 = [
-              {name:'gen',	type:'gen', 	  width: 100,  align:'center',  h_align: 'center', 	label: 'generation'},
-              {name:'label',type:'gen_label', width: 200,  align:'left',  	h_align: 'center', 	label: '레이블', resize: true},
-              {name:'pk', 	type:'str',   	  width: 130, align:'center',   valign:'top',  	  	label: 'no edit', edit: false},
-              {name:'pk', 	type:'str',   	  width: 130, align:'center',   valign:'top',  	  	label: '문자열1'},
-              {name:'dept', type:'number',	  width: 90,  valign: 'top',    label:'숫자', calc_row: 'sum', calc_title: ''}
+  
+    var column_scheme2 = [
+              {name:'gen',  type:'gen',     width: 100,  align:'center',  h_align: 'center',   label: 'generation'},
+              {name:'label',type:'gen_label', width: 200,  align:'left',    h_align: 'center',   label: '레이블', resize: true},
+              {name:'pk',   type:'str',       width: 130, align:'center',   valign:'top',        label: 'no edit', edit: false},
+              {name:'pk',   type:'str',       width: 130, align:'center',   valign:'top',        label: '문자열1'},
+              {name:'dept', type:'number',    width: 90,  valign: 'top',    label:'숫자', calc_row: 'sum', calc_title: ''}
         ];
 
-		var id1 = "testGrid";
+    var id1 = "testGrid";
 
-		window.f = new footloosegrid(id1, config1, column_scheme1);
+    window.f = new footloosegrid(id1, config1, column_scheme1);
         f.Create_grid();
 
-        //var sample_data 	  = generate_sample_data2(20000, column_scheme1);
-        var sample_data 	  = generate_sample_data_drill(20000, column_scheme1);
+        //var sample_data     = generate_sample_data2(20000, column_scheme1);
+        var sample_data     = generate_sample_data_drill(20000, column_scheme1);
         var sample_data_drill = generate_sample_data_drill(300, column_scheme2);
         var sample_data_json  = window.data = generate_sample_data_json(300);
 
         // 학습용 예제 버튼들 ----------------------------------------------------
         
         // grid 생성 버튼
-        $('#btn_create1').click(function(){ grid_type = 'normal';	create(id1, config1, column_scheme1); });
-        $('#btn_create2').click(function(){ grid_type = 'drill';	create(id1, config2, column_scheme2); });
+        $('#btn_create1').click(function(){ grid_type = 'normal';  create(id1, config1, column_scheme1); });
+        $('#btn_create2').click(function(){ grid_type = 'drill';  create(id1, config2, column_scheme2); });
         
         function create (id, cfg, scheme){
-        	$('#' + id).empty();
-			window.f = new footloosegrid(id, cfg, scheme);
-        	window.f.Create_grid();
+          $('#' + id).empty();
+      window.f = new footloosegrid(id, cfg, scheme);
+          window.f.Create_grid();
         }
 
         // data 로딩 버튼
         function loading (s_data){
-        	time_start('loading');
-        	var callback = function(){ $('#status').text('loaded : ' + time_end('loading') + ' ms'); };
-        	f.Load_data(s_data, callback);
+          time_start('loading');
+          var callback = function(){ $('#status').text('loaded : ' + time_end('loading') + ' ms'); };
+          f.Load_data(s_data, callback);
         }
 
         $('#btn_load1').click(function(){
-        	var s_data = {'normal': sample_data_json, 'drill': sample_data_drill}[grid_type];
-        	loading(s_data);
+          var s_data = {'normal': sample_data_json, 'drill': sample_data_drill}[grid_type];
+          loading(s_data);
         });
 
         $('#btn_load2').click(function(){
-        	var s_data = {'normal': sample_data, 'drill': sample_data_drill}[grid_type];
-        	loading(s_data);
+          var s_data = {'normal': sample_data, 'drill': sample_data_drill}[grid_type];
+          loading(s_data);
         });
         
         $('#btn_paint').click(function(){ f.paint_rows(f); });
         $('#add_row').change(function(){ var v = $('#add_row option:selected'); eval(v.text()); $(this).val("0"); });
         $('#del_row').change(function(){ var v = $('#del_row option:selected'); eval(v.text()); $(this).val("0"); });
         $('#btn_show_hide').click(function(){
-        	var msg 	= 'show';
-        	var width 	= 0;
-        	if(/show/.test($(this).text())) { 
-        		msg 	= 'hide'; width = -1; 
-        	}
-        	$(this).html('5번 column<br>' + msg); 
+          var msg   = 'show';
+          var width   = 0;
+          if(/show/.test($(this).text())) { 
+            msg   = 'hide'; width = -1; 
+          }
+          $(this).html('5번 column<br>' + msg); 
 
-        	time_start('resize'); f.col_resize(5, width); time_end('resize');
+          time_start('resize'); f.col_resize(5, width); time_end('resize');
         });
 
-		// 2차원 배열 형태 샘플 데이터 생성기
-		function generate_sample_data2(row_num, scheme){
-			var data = [], row, i;
+    // 2차원 배열 형태 샘플 데이터 생성기
+    function generate_sample_data2(row_num, scheme){
+      var data = [], row, i;
 
-			function new_row (j,v){ row.push(  data_generate[v.type](i,j)  ); }
-			
-			for(i = 0; i < row_num; ++i){
-				row = [];
-				$.each(scheme, new_row);
-				data.push(row);
-			}
-			return data;
-		}
-		
-		// JSON 배열 형태 샘플 데이터 생성기
-		function generate_sample_data_json(row_num){
-			var scheme = column_scheme1;
-			var data = [];
-			for(var i = 0; i < row_num; ++i){
-				var row = {};
-				$.each(scheme, function(j,v){ row[v.name] = data_generate[v.type](i,j); });
-				data.push(row);
-			}
-			return data;
-		}
+      function new_row (j,v){ row.push(  data_generate[v.type](i,j)  ); }
+      
+      for(i = 0; i < row_num; ++i){
+        row = [];
+        $.each(scheme, new_row);
+        data.push(row);
+      }
+      return data;
+    }
+    
+    // JSON 배열 형태 샘플 데이터 생성기
+    function generate_sample_data_json(row_num){
+      var scheme = column_scheme1;
+      var data = [];
+      for(var i = 0; i < row_num; ++i){
+        var row = {};
+        $.each(scheme, function(j,v){ row[v.name] = data_generate[v.type](i,j); });
+        data.push(row);
+      }
+      return data;
+    }
 
-		// 드릴다운용 샘플 데이터 생성기
-		function generate_sample_data_drill(row_num, scheme){
-			//var scheme = column_scheme2;
-			var data = [], i;
-			
-			var gen = [0];
-			for (i = 1; i < row_num; i++) {
-				var upper_gen = gen[i-1];
-				var next = Math.floor(Math.random() * 3) - 1;
-				var this_gen = upper_gen + next;
-				if(this_gen < 1) this_gen = 1;
-				gen.push(this_gen);
-			}
-			
-			for (i = 0; i < row_num; i++) {
-				var row = [];
-				for (var j = 0; j < scheme.length; j++) {
-					var v = scheme[j];
-					if(v.type === 'gen')	
-						row.push(gen[i]);
-					else
-						row.push(  data_generate[v.type](i,j)  );
-				}
-				data.push(row);
-			}
-			return data;
-		}
+    // 드릴다운용 샘플 데이터 생성기
+    function generate_sample_data_drill(row_num, scheme){
+      //var scheme = column_scheme2;
+      var data = [], i;
+      
+      var gen = [0];
+      for (i = 1; i < row_num; i++) {
+        var upper_gen = gen[i-1];
+        var next = Math.floor(Math.random() * 3) - 1;
+        var this_gen = upper_gen + next;
+        if(this_gen < 1) this_gen = 1;
+        gen.push(this_gen);
+      }
+      
+      for (i = 0; i < row_num; i++) {
+        var row = [];
+        for (var j = 0; j < scheme.length; j++) {
+          var v = scheme[j];
+          if(v.type === 'gen')  
+            row.push(gen[i]);
+          else
+            row.push(  data_generate[v.type](i,j)  );
+        }
+        data.push(row);
+      }
+      return data;
+    }
 
-		$('#btn_save_ajax_json').click(function(){
-			var callback = function(res){alert(res.data.length + ' 건의 데이터가 서버로 데이터가 전송되었습니다');};
-			f.save_ajax_json('saveTest.action', callback);
-		});
+    $('#btn_save_ajax_json').click(function(){
+      var callback = function(res){alert(res.data.length + ' 건의 데이터가 서버로 데이터가 전송되었습니다');};
+      f.save_ajax_json('saveTest.action', callback);
+    });
 
-		$('#btn_get_ajax_json').click(function(){ f.get_json(); });
+    $('#btn_get_ajax_json').click(function(){ f.get_json(); });
 
-		$('#down_csv').click(function(){
-			var data = [];
-			f.data.forEach(function(row){
-				data.push(row.join(',') + '\n');
-			});
-			var blob = new Blob(data, {type: "text/plain;charset=utf-8"});
-			saveAs(blob, 'test.csv');
-		});
-		
-	
-	});    // end of document ready
+    $('#down_csv').click(function(){
+      var data = [];
+      f.data.forEach(function(row){
+        data.push(row.join(',') + '\n');
+      });
+      var blob = new Blob(data, {type: "text/plain;charset=utf-8"});
+      saveAs(blob, 'test.csv');
+    });
+    
+  
+  });    // end of document ready
 
-	
+  
 
 </script>
 </head>
@@ -298,21 +298,21 @@
 <br> <br>
 row 추가 기능
 <select id='add_row'>
-	<option value="0">//선택하지 않음</option>
-	<option>f.Add_row(); // 하나의 row 를 최하단에 추가한다.</option>
-	<option>f.Add_row(3); // 3 개의 row 를 최하단에 추가한다.</option>
-	<option>f.Add_row(2,1); // 2 개의 row 를 1 번 row 에 삽입한다.</option>
-	<option>f.Add_row(100); // 100 개의 row 를 추가한다.</option>
+  <option value="0">//선택하지 않음</option>
+  <option>f.Add_row(); // 하나의 row 를 최하단에 추가한다.</option>
+  <option>f.Add_row(3); // 3 개의 row 를 최하단에 추가한다.</option>
+  <option>f.Add_row(2,1); // 2 개의 row 를 1 번 row 에 삽입한다.</option>
+  <option>f.Add_row(100); // 100 개의 row 를 추가한다.</option>
 </select>
 <br>
 row 삭제 기능
 <select id='del_row'>
-	<option value="0">//선택하지 않음</option>
-	<option>f.Delete_row(); // 최하단 row 삭제 </option>
-	<option>f.Delete_row('check', 0); // 체크박스 체크된 row 삭제</option>
-	<option>f.Delete_row('radio', 1); // 라디오 버튼 체크된 row 삭제</option>
-	<option>f.Delete_row('all'); // 모든 row 삭제 </option>
-	<option>f.Delete_row([0,2,4]); // 0,2,4 번째 row 삭제 </option>
+  <option value="0">//선택하지 않음</option>
+  <option>f.Delete_row(); // 최하단 row 삭제 </option>
+  <option>f.Delete_row('check', 0); // 체크박스 체크된 row 삭제</option>
+  <option>f.Delete_row('radio', 1); // 라디오 버튼 체크된 row 삭제</option>
+  <option>f.Delete_row('all'); // 모든 row 삭제 </option>
+  <option>f.Delete_row([0,2,4]); // 0,2,4 번째 row 삭제 </option>
 </select>
 <br>
 </body>
