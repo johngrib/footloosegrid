@@ -65,6 +65,7 @@ $(document).ready(function(){
     
     // attatch click event
     grid.attatch_click_event(show_map);
+    show_map(null, 0, null, null, grid);
 
     function show_map (e, row, col, val, _this)  {
         
@@ -90,6 +91,7 @@ $(document).ready(function(){
 </script>
 </head>
 <body>
+지도를 보고 싶은 항목을 클릭하세요. Click to show map.
   <div class="table">
     <div class="row">
         <div class="cell" id="testGrid"></div>
