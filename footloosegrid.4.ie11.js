@@ -1000,20 +1000,14 @@ function FGR(id, cfg, scheme) {
       const $this = $(this);
       const row   = _toInt($this.attr('row'));  // 화면 상의 row
 
-      _this.row_selected = _toInt($this.find('[row]').first().attr('row'));  // data 상의 row
+      _this.row_selected = _this.current_top_line + row; // data 상의 row
 
       // 현재 색칠된 상태인 row 의 색을 본래대로 되돌린다
       if(_this.highlight_row >= 0)
         _this.paint_one_row(_this.highlight_row, _this.before_highlight_color);
 
       _this.highlight_row = row;
-
-      if(_this.get_gen_col() < 0){
-        _this.before_highlight_color = $this.css('background-color');
-        _this.paint_one_row(row, _style.row_selected);
-      } else {
-        _this.render_data(_this, _this.current_top_line);
-      }
+      _this.render_data(_this, _this.current_top_line);
       return;
     };
 
