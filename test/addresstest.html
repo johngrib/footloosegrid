@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>Grid 테스트</title>
+<link rel="stylesheet" type="text/css" href="../css/footloosegrid.4.css">
+<link rel="stylesheet" type="text/css" href="../css/jquery-ui.css">
+<style>
+  #map_canvas {width:740px;height:400px;}
+  .table { display: table; }
+  .row   { display: table-row; }
+  .cell  { display: table-cell; }
+</style>
+<script src="../lib/underscore-min.js"></script>
+<script src="../lib/jquery-1.11.3.min.js"></script>
+<script src="../lib/jquery-ui.min.js"></script>
+<!-- 
+<script src="../footloosegrid.4.ie11.js"></script>
+ -->
+ <script src="../footloosegrid.4.js"></script>
+<script type="text/javascript" src="https://maps.google.com/maps/api/js?sensor=ture_or_false"></script>
+<script type="text/javascript">
+
+/**
+ * csv 파일을 2차원 array 로 리턴한다
+ */
+function csv_to_array (data) {
+  return data.split('\n').map(function(row) { return row.split(',') });
+}
+
+/**
+ * main
+ */
+$(document).ready(function(){
+  
+  const map_obj  = $('#map_canvas').get(0);
+  const geocoder = new google.maps.Geocoder();
+  const data_url = 'https://johngrib.github.io/footloosegrid/data/roadaddressdata.csv';
+
+  const cfg = {
+    drill_down   : true,
+    cols_show    : 3,
+    rows_show    : 15,
+    fixed_header : 1,
+  };
+  const scheme = [
+    {name:'gen',  type:'gen',       width: 0,   align:'left',   label: 'gen'},
+    {name:'road', type:'gen_label', width: 250, align:'left',   label: '레이블', resize: true},
+    {name:'dong', type:'str',       width: 130, align:'center', label: '읍/면/동', edit: false},
+    {name:'code', type:'str',       width: 130, align:'center', label: '도로코드', edit: false}
+  ];
+    
+  const grid = new footloosegrid('testGrid', cfg, scheme).Create_grid();
+    
+  $.ajax(data_url).done(main_proc);
+  
+
+  /**
+   * data load & attatch event
+   */
+  function main_proc(result){
+
+    // load data
+    grid.Load_data(csv_to_array(result));
+    
+    // attatch click event
+    grid.attatch_click_event(show_map);
+
+    function show_map (e, row, col, val, _this)  {
+        
+        const this_row = _this.data[row]
+        const addr     = (this_row[1]).replace(/\d+$/, '') + ' ' + this_row[2];
+
+        geocoder.geocode({address:addr}, function(results, status){
+          if(results) {
+            const loc    = results[0].geometry.location;
+            const option = {
+                zoom          : 17,
+                mapTypeControl: true,
+                center        : new google.maps.LatLng(loc.lat() , loc.lng()),
+                mapTypeId     : google.maps.MapTypeId.ROADMAP,
+            };
+            new google.maps.Map(map_obj, option); 
+          }
+        });
+      } // end of show_map
+  } // end of main_proc
+});
+
+</script>
+</head>
+<body>
+  <div class="table">
+    <div class="row">
+        <div class="cell" id="testGrid"></div>
+        <div class="cell" id="map_canvas"></div>
+    </div>
+  </div>
+</body>
+</html>
