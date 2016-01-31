@@ -4198,4 +4198,4 @@ FGR.prototype.get_modified_rows = function(){
   return this.data.filter(function(row) { return row.modified } );
 };
 
-return FGR; })(jQuery, XLSX);  // end of codes
+return FGR; })(jQuery);  // end of codes
