@@ -14,8 +14,7 @@
 * IE ( footloosegrid.4.ie11.js 사용 )
 
 ## Sample Page
-* [with d3.js](https://johngrib.github.io/footloosegrid/test/d3test.html)
-
+* [with d3.js](https://johngrib.github.io/article/2016/20160128_inbody.html)
 * [drill down/up, with google map](https://johngrib.github.io/footloosegrid/test/addresstest.html)
 
 * header label merge
