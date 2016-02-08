@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-<title>Grid 테스트</title>
+<title>Grid 생성 테스트</title>
 <link rel="stylesheet" type="text/css" href="../css/footloosegrid.4.css">
 <link rel="stylesheet" type="text/css" href="../css/jquery-ui.css">
 <style type="text/css">
@@ -20,13 +20,15 @@
     }
 
 </style>
+<script src="https://code.jquery.com/qunit/qunit-1.21.0.js"></script>
 <script src="../lib/underscore-min.js"></script>
 <script src="../lib/jquery-1.11.3.min.js"></script>
 <script src="../lib/jquery-ui.min.js"></script>
 <script src="../lib/FileSaver.min.js"></script>
 <script src="../lib/jszip.min.js"></script>
 <script src="../lib/xlsx.min.js"></script>
-<script src="../footloosegrid.4.js"></script>
+<script src="../footloosegrid.4.ie11.noconst.test.js"></script>
+<script src="test.js"></script>
 <script type="text/javascript">
 
   // sample data 생성 규칙 정의
@@ -272,6 +274,7 @@
       saveAs(blob, 'test.csv');
     });
     
+    unit_test();
   
   });    // end of document ready
 
@@ -315,5 +318,7 @@ row 삭제 기능
   <option>f.Delete_row([0,2,4]); // 0,2,4 번째 row 삭제 </option>
 </select>
 <br>
+<div id="qunit"></div>
+<div id="qunit-fixture"></div>
 </body>
 </html>
