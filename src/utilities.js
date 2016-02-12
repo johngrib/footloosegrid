@@ -110,3 +110,20 @@ function _check_ie_version(){
 @*/
   return version;
 };
+
+/**
+ * 스크롤 바의 너비(width) 를 구한다
+ * @returns {Number}
+ * @link http://chris-spittles.co.uk/jquery-calculate-scrollbar-width/
+ */
+FGR.prototype.get_scroll_bar_width = function() {
+  var div_inner = $('<div>', {html: 'scroll test', style: 'width:100%;height:200px;'});
+  var div_outer = $('<div>', {style:'width:200px;height:150px;position:absolute;top:0;left:0;visibility:hidden;overflow:hidden;'}).append(div_inner);
+
+  $('body').append(div_outer);
+  var width1 = div_inner[0].offsetWidth;
+  div_outer.css('overflow', 'scroll');
+  var width2 = div_outer[0].clientWidth;
+  div_outer.remove();
+  return width1 - width2;
+};
