@@ -1,4 +1,503 @@
-"use strict";
+function time_start (msg){ return (time_start[msg] = new Date().getTime()); }
+
+function time_end(msg){
+  var result = new Date().getTime() - time_start[msg];
+  console.log(msg + ' : ' + result);
+  return result;
+};/* FootlooseGrid - v3.0 - 2015-12-26
+ * https://github.com/johngrib/FootlooseGrid
+ * Copyright 2015 Lee JongRip (이종립, a.k.a. John Grib) and other contributors; 
+ * Licensed MIT 
+ */
+var footloosegrid = (function _create_footloosegrid_function($){;// getter 생성기
+function _make_const_getter(v) {
+  return function() { return v };
+}
+
+// parseInt wrapped
+function _toInt(num){
+  return parseInt(num, 10);
+}
+
+function _is_number (value) {
+  return typeof value === 'number' && isFinite(value);
+}
+/**
+ * 숫자 형식의 문자열 판별
+ * 정수와 실수는 true 를 리턴하며, 과학 표기법은 false 를 리턴한다
+ * @returns {Boolean}
+ */
+var _is_number_str = (function () {
+  var reg = /^\s*-?\d+(?:\.\d+)?\s*$/;
+  return function (str) { return reg.test(str) };
+})();
+
+/**
+ * 숫자에 콤마를 넣어 문자열로 리턴해 준다
+ * @returns {String}
+ */
+var _to_comma_format = (function() {
+  var reg = /\B(?=(\d{3})+(?!\d))/g;
+  return function (num) {
+    if(num == null)
+      return num;
+
+    var v   = num.toString();
+    var dot = v.indexOf('.');
+
+    if(dot >= 0){
+      var tail = v.slice(dot);
+      var head = v.slice(0, dot);
+      return head.replace(reg, ",") + tail;
+    } else {
+      return v.replace(reg, ",");
+    }
+  };
+})();
+// UNIT TEST
+QUnit.test("_to_comma_format", function( assert ) {
+  var rs1 = _to_comma_format(123456789.1234567);
+  assert.ok(rs1 === '123,456,789.1234567',"Passed!" );
+
+  var rs2 = _to_comma_format(undefined);
+  assert.ok(_.isUndefined(rs2),"Passed!" );
+});
+
+/** default_obj 에 존재하는 key/value 값이 target_obj 에 존재하지 않는다면 해당 key/value 값을 복사해 입력해 준다 */
+function _insert_undefined_values(target_obj, default_obj) { 
+  for(var key in default_obj)
+    if(target_obj[key] === undefined)
+      target_obj[key] = default_obj[key];
+  return target_obj; };
+
+/** event interceptor 를 부착해주는 function creator */
+FGR.prototype.set_interceptor = function set_interceptor (target, interceptor, _this) {
+  return function () {
+    var args = [].slice.call(arguments);
+    interceptor.apply(_this, args);
+    return target.apply(_this, args); 
+  };
+};
+
+/**
+ * css 파일에 정의되지 않은 class 를 생성하여 삽입한다
+ * @param id
+ * @param rule
+ * @link https://stackoverflow.com/posts/10147897/revisions
+ *
+ * 이 펑션의 존재 이유는 특정 DOM 의 사이즈나 색깔을 그룹 단위로 조절할 때의 퍼포먼스를 확보하기 위함이다
+ * 모든 셀과 컬럼의 위치를 for 루프를 통해 조정하면 속도가 느려질 수 밖에 없다
+ * 그러나 이 펑션에서 사용한 css injection 기법을 사용하면
+ * web browser 의 native code 구동을 유도하기에 속도가 for 루프보다 훨씬 빠르다
+ * 특히 대상 객체가 많을수록 차이가 더 커진다
+ *
+ * css injection 에 대해서는 같은 고민을 한 사람이 여럿 있는 것 같은데, 다음 링크는 확인해보지 못했지만 살펴볼 가치가 있을듯
+ * https://github.com/kajic/jquery-injectCSS
+ */
+function _insert_new_styles(_this, id, rule) {
+  $('#' + id).remove();
+  $("<div>", { id: id, html: '<style>' + rule + '</style>' })
+    .appendTo(['#', _this.get_id()].join(''));
+  return _this; 
+}
+
+  
+/**
+ * Internet Explorer 버전 체크
+ * ※ IE 11 버전부터는 cc_on 문이 작동하지 않으므로, ie 값이 false 가 된다.
+ * @returns {Boolean}
+ * @link https://msdn.microsoft.com/library/8ka90k2e(v=vs.94).aspx
+ */
+function _check_ie_version(){
+  var version = -1;
+/*@cc_on
+  @if   (@_jscript_version == 10)
+    version = 10;
+  @elif (@_jscript_version == 9)
+    version = 9;
+  @elif (@_jscript_version == 5.8)
+    version = 8;
+  @end
+@*/
+  return version;
+};;// configure ---------------------------------------------------
+/*
+ * ※ monospace 지원 폰트로 볼 때 잘 보입니다.
+ *
+ * ┌────────┤ main div : user defined div┣─────┐  main div 는 html, jsp 에서 사용자가 정의한 div 를 사용한다
+ * │   table : _fg_main_tbl                     │
+ * │                                            │  _fg_div_left  는 top_corner 와 row_label  을 포함한다
+ * │  _fg_div_left  _fg_div_right               │  _fg_div_right 는 col_label  과 data_table 을 포함한다
+ * │ ┌────────────┬────────────┬───┐            │  top_empty, bot_empty, bot_corner 는 사용하지 않는 div
+ * │ │ top_corner │ col_label  │   │ top_empty  │
+ * │ │ _fg_div_00 │ _fg_div_01 │   │ _fg_div_02 │  corner, col_label, top_empty 등은 사용 편의를 위한 alias 이며
+ * │ ├────────────┼────────────┼───┤            │  _fg 로 시작하는 이름들은 html element 의 id 이다
+ * │ │ calc_left  │ calc_right │   │ calc_empty │
+ * │ │ _fg_div10  │ _fg_div11  │   │ _fg_div_12 │
+ * │ ├────────────┼────────────┼───┤            │  _fg 로 시작하는 이름들은 html element 의 id 이다
+ * │ │            │            │ ^ │            │
+ * │ │ row_label  │ data_table │ │ │ scroll_v   │
+ * │ │ _fg_div_20 │ _fg_div_21 │ │ │ _fg_div_22 │
+ * │ │            │            │ v │            │
+ * │ ├────────────┼────────────┼───┤            │
+ * │ │            │<---------> │   │            │
+ * │ │ bot_empty  │ scroll_h   │   │ bot_corner │
+ * │ │ _fg_div_30 │ _fg_div_31 │   │ _fg_div_32 │
+ * │ ├────────────┴────────────┴───┤            │
+ * │ │ bot_paging                  │            │
+ * │ │ _fg_div_40                  │            │
+ * │ └─────────────────────────────┘            │
+ * └────────────────────────────────────────────┘
+*/
+
+// 기본 설정
+var _default_config = {
+  wheel_move_row : 1 ,  // 마우스 휠 한 번으로 스크롤할 row 의 수
+  drill_down     : false,
+  rows_show      : 20,  // 한 페이지에 보여줄 row 의 수 (테이블 전체 height 자동 조정)
+  row_height     : 25,  // 한 row 의 height
+  checkbox_size  : 20,  // checkbox 와 radio 버튼의 사이즈
+  resize_icon_size     : 16,
+  scroll_delay_ms      : 10,
+  flexible_right_width : true,
+  use_filter_div       : false,
+  use_filter_panel     : false,
+  use_sort_panel       : false,
+  search_by_reg_exp    : false,
+  search_replace       : false,
+};
+
+// datepicker 기본 설정
+var _default_date_config = {
+  dateFormat  : 'yy-mm-dd',
+  changeYear  : true,
+  changeMonth : true,
+  weekHeader  : 'Wk',
+  yearRange   : 'c-20:c+20',
+  dayNamesMin :     ['일', '월', '화', '수', '목', '금', '토'],
+  monthNames  :     ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월'],
+  monthNamesShort : ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월'],
+  constrainInput     : true, // true: 숫자만 입력 가능, false: 다른 키도 입력 가능
+  showMonthAfterYear : true,
+};
+
+// scheme type 별 디폴트 값 정의. 설정하지 않은 값들은 아래의 값으로 초기화된다.
+var _default_scheme = {
+  str       : {name:'', label:'', width: 100, h_align:'center', align:'left',   valign:'middle', edit: true, size: 2000},
+  number    : {name:'', label:'', width: 100, h_align:'center', align:'right',  valign:'middle', edit: true, format: '#.############'},
+  check     : {name:'', label:'', width: 30,  h_align:'center', align:'center', valign:'middle', edit: true},
+  select    : {name:'', label:'', width: 100, h_align:'center', align:'center', valign:'middle', edit: true, option: []},
+  gen       : 'check',  // check 와 같은 초기값을 갖는다.
+  gen_label : 'check',
+  radio     : 'check',
+  date      : 'str'
+};
+
+// css class 스타일 이름 정의
+var _style = {
+  main_div : '_fg_main_div',
+  row      : '_fg_row',
+  cell     : '_fg_cell',
+  label    : '_fg_label_text',
+  input    : '_fg_input_text',
+  check    : '_fg_input_check',
+  select   : '_fg_input_select',
+  img      : '_fg_input_img',
+  calc     : '_fg_calc',
+  idiv     : '_fg_input_div',
+  scroll_h : '_fg_scroll_h',
+  scroll_v : '_fg_scroll_v',
+  readonly : '#F5EAB9',  // 읽기 전용 셀의 배경색
+
+  row_color_odd  : '#FFFFFF' ,
+  row_color_even : '#E8EEF5',
+  row_selected   : '#E8EEF5',
+  row_bot_line   : '1px solid #B6B6B6',
+  input_padding  : 5,
+
+  paging_button          : '_fg_paging_button',
+  paging_button_selected : '_fg_paging_button_selected',
+
+  sort_btn   : '_fg_sort_btn',
+  search_div : '_fg_div_search',
+
+  filter_btn          : '_fg_filter_icon',
+  filter_btn_red      : '_fg_filter_icon_red',
+  filter_div          : '_fg_div_filter',
+  filter_cond         : '_fg_filter_cond',
+  filter_inner_btn    : '_fg_filter_inner_btn',
+  filter_sort_div     : '_fg_filter_sort_div',
+  filter_search_div   : '_fg_filter_search_div',
+  filter_sort_title   : '_fg_filter_sort_title',
+  filter_search_title : '_fg_filter_search_title',
+  filter_filter_title : '_fg_filter_filter_title',
+  filter_check        : '_fg_filter_checkbox',
+  filter_input        : '_fg_filter_input',
+  filter_plus_btn     : '_fg_filter_plus_btn',
+  filter_minus_btn    : '_fg_filter_minus_btn',
+
+  drill_btn       : '_fg_drill_btn',
+  drill_indent    : 13,
+  drill_btn_width : 20,  // drill down 사용시의 label 인덴트와 버튼 사이즈(border, margin 포함)
+  sort_btn_width  : 15,
+
+  modal_div     : '_fg_div_modal',
+  modal_content : '_fg_modal_content'
+};
+
+// message 설정
+var _msg = {
+  header_resize : '마우스로 드래그하여 너비를 조정할 수 있습니다',
+  filter_run    : '적용',
+  filter_close  : '닫기',
+  filter_clear  : '조건 초기화',
+  sort_asc      : '오름차순으로 정렬',
+  sort_desc     : '내림차순으로 정렬',
+  reg_exp       : 'Regular Expression',
+  ig_case       : '대소문자 무시',
+  find_btn      : '찾기',
+  replace_btn   : '바꾸기',
+  close_btn     : '닫기',
+  whole_word    : '일치하는 단어만 찾기',
+  wild_card     : '와일드카드(?, *) 사용',
+  search_fail   : '검색 결과가 없습니다.',
+  search        : '검색',
+  direction     : '방향',
+  option        : '옵션',
+  target        : '대상',
+  do_search     : '찾기',
+  forward       : '정방향',
+  reward        : '역방향',
+  confirm       : '확인',
+  filter_none   : '선택',
+  filter_eq     : '= 일치',
+  filter_ne     : '&ne; 불일치',
+  filter_lt     : '< 작다',
+  filter_gt     : '> 크다',
+  filter_le     : '≤ 작거나 같다',
+  filter_ge     : '≥ 크거나 같다',
+  filter_begin  : '^= 시작 문자',
+  filter_end    : '$= 끝 문자',
+  filter_cont   : '*= 포함 문자',
+  filter_ncont  : '*&ne; 제외 문자'
+};
+
+/**
+ * Encoding 과 관계없이 표현가능한
+ * Unicode HTML Entity (decimal) 집합
+ */
+FGR.prototype.sp_char = {
+// 주요 그리스 문자
+  g_gamma   : '&#915;',  // Γ  &Gamma;
+  g_delta   : '&#916;',  // Δ  &Delta;
+  g_lambda  : '&#923;',  // Λ  &Lambda;
+  g_pi      : '&#928;',  // Π  &Pi;      - product 연산자, 중복순열
+  g_sigma   : '&#931;',  // Σ  &Sigma;   - 순열의 합
+  g_phi     : '&#934;',  // Φ  &Phi;     - 정규 분포
+  g_gamma_l : '&#947;',  // γ  &gamma;
+  g_delta_l : '&#948;',  // δ  &delta;
+  g_lambda_l: '&#955;',  // λ  &lambda;  - 람다(선형대수학), 함수 표현식
+  g_pi_l    : '&#960;',  // π  &pi;      - 원주율
+  g_sigma_l : '&#963;',  // σ  &sigma;   - 표준편차, 약수함수
+  g_phi_l   : '&#966;',  // φ  &phi;     - 원의 지름, 함수
+
+// 수학, 논리학
+  m_lt     : '&#60;'  ,  // <  &lt;
+  m_gt     : '&#62;'  ,  // >  &gt;
+  m_not    : '&#172;' ,  // ¬  &not;     - not (논리학)
+  m_plusmn : '&#177;' ,  // ±  &plusmn;
+  m_times  : '&#215;' ,  // ×  &times;
+  m_divide : '&#247;' ,  // ÷  &divide;
+  m_forall : '&#8704;',  // ∀  &forall;  - 모든(수학/논리학)
+  m_exist  : '&#8707;',  // ∃  &exist;   - 존재(수학/논리학)
+  m_radic  : '&#8730;',  // √  &radic;   - square root. 제곱근(수학)
+  m_infin  : '&#8734;',  // ∞  &infin;   - 무한대
+  m_int    : '&#8747;',  // ∫  &int;     - 인테그랄. 유니코드와 LaTeX 의 표기가 다르니 주의
+  m_ne     : '&#8800;',  // ≠  &ne;
+  m_le     : '&#8804;',  // ≤  &le;
+  m_ge     : '&#8805;',  // ≥  &ge;
+  m_less_oeq: '&#8806;',  // ≦  named entity 가 아님
+  m_grt_oeq : '&#8807;',  // ≧  named entity 가 아님
+
+// 단위 : 통화에 대해서는 다음 페이지를 참고할 것 http://www.xe.com/symbols.php
+  u_per_mil    : '&#8240;' ,  // ‰  &permil;  - 천분율
+  u_euro       : '&#8364;' ,  // €  &euro;    - 유로 : 영국, 스위스를 제외한 유럽
+  u_celsius    : '&#8451;' ,  // ℃  no named  - 섭씨
+  u_fahrenheit : '&#8457;' ,  // ℉  no named  - 화씨
+  u_yuan       : '&#20803;',  // 元  no named  - 중국, ￥ 을 쓰는 경우도 있다
+  u_cent       : '&#65504;',  // ￠  no named  - 미국
+  u_pound      : '&#65505;',  // ￡  no named  - 영국
+  u_yen        : '&#65509;',  // ￥  no named  - 일본
+  u_won        : '&#65510;',  // ￦  no named  - 한국
+
+// 공백
+  c_nbsp : '&#160;'  // space &nbsp;  - 공백
+};
+;
+/**
+ * config 를 초기화하고, 값이 주어지지 않은 항목을 default 값으로 채운다.
+ * @param cfg
+ * @returns {object}
+ */
+function _config_initialize(cfg) {
+
+  var col_length = this.scheme.length;
+
+  // 0. 사용자가 정의하지 않은 기본 값을 입력한다.
+  var ncfg = _insert_undefined_values(cfg, _default_config);
+
+  // 1. fixed_header, cols_show 값을 계산한다.
+  if(ncfg.cols_show === undefined){
+    ncfg.fixed_header = (col_length > 1) ? 1 : 0;
+    ncfg.cols_show    = (col_length > 1) ? col_length - ncfg.fixed_header : col_length;
+  }
+
+  // 2. drill_color 를 설정한다
+  /*
+    drill_color 는 gen 넘버에 따라 row 가 갖게되는 배경색.
+    http://www.perbang.dk/rgbgradient/ 에서 제공하는 gradation color 생성기를 통해 생성한 컬러 스키마를 이용해 작성하였음.
+    만약 인쇄시에도 가독성 있는 배경색을 사용할 필요가 있다면 다음 주소를 참고할 만함.
+    --> http://colorbrewer2.org/ - 미국 지질연구소 지도 디자인 담당 교수가 만든 (흑백/컬러) 인쇄를 위한 지도 색깔 그라데이션 생성 서비스.
+  */
+  if(ncfg.drill_down && ncfg.drill_color === undefined)
+    ncfg.drill_color = [ '#FFFFFF', '#FBF0F3', '#F7E3EB', '#F3D5E7', '#EFC8E8', '#EABBEB', '#DBAFE7', '#CBA3E3', '#B297DF', '#998CDC' ];
+
+  // 3. date 설정
+  ncfg.date = (ncfg.date) ? _insert_undefined_values(ncfg.date, _default_date_config)
+    : _default_date_config;
+
+  return ncfg; 
+};
+
+/**
+ * scheme type 별 default 설정을 추가(사용자가 정의한 scheme 의 빈 값을 default 값으로 채운다) 하고, 초기 설정을 계산한다
+ * @param _this
+ * @param scheme
+ * @returns {object}
+ */
+function _scheme_initialize(scheme){
+
+  this.get_cell_define = _make_const_getter(_create_cell_define(this));  // cell 의 type 에 따른 특징과 기능을 보관한다
+
+  var _this = this;
+  var date_cfg = (this.cfg.date) ? _insert_undefined_values(this.cfg.date, _default_date_config)
+      : _default_date_config;
+
+  // 사용자가 정의하지 않은 컬럼 기본 설정을 복사한다.
+  function _get_column (col) {
+    if(! col.type) throw new Error('need column type.');
+    var def  = _default_scheme[col.type];
+    var defn = (_.isString(def)) ? _default_scheme[def] : def;
+    return _insert_undefined_values(col, defn);
+  }
+  
+  scheme.forEach(function(col){
+    
+    var column = _get_column(col);
+
+    // 컬럼 초기 width 를 설정한다
+    column.init_width = column.width;  
+
+    // edit false 라면 읽기 전용 배경색을 지정해 준다
+    if(!column.bg_color && column.edit === false)
+      column.bg_color = _style.readonly;
+
+    // cell 타입별 정의를 참조한다.
+    var set = this.get_cell_define()[column.type];  
+    
+    column.element = set.element;
+
+    // 사용자가 설정한 getter 우선
+    column.getter  = column.getter || set.getter;  
+
+    column.init_data = (column.init_data === undefined) ? set.init_data : column.init_data;
+    column.width_adj = set.width_adj;
+    
+    column.focus_in = column.focus_in || set.focus_in;
+
+    if(column.type === 'date'){
+      column.date = (column.date) ? _insert_undefined_values(column.date, date_cfg) : date_cfg;
+    }
+
+    if(! column.format_regexp && column.size && _.isNumber(column.size)){
+      column.format_regexp = new RegExp('(^.{0,' + _toInt(column.size) + '}).*$');
+    } else if(column.format){
+      var point_length = column.format.replace(/^(#+\.)/, '').length;
+      column.format_regexp = new RegExp('(^[^\\.]+(?:\\.\\d{1,' + point_length + '})?).*$');
+    }
+    
+    if(column.format_regexp){
+      column.input_slicer  = (function (format) {
+        return function (v) { return String(v).replace(format, '$1') }; 
+      })(column.format_regexp);
+    }
+
+    // output functions
+    column.setter           = column.setter           || set.setter;
+    column.output_validator = column.output_validator || set.output_validator;
+    column.output_formatter = column.output_formatter || set.output_formatter;
+    column.output_css       = column.output_css       || set.output_css;
+    column.init_data        = column.init_data        || set.init_data;
+
+    /*
+     * data 를 화면에 보여주는 setter function wrapping 작업
+     * combined setter : validator + output_css + formatter + setter
+     */
+    column.setter = (function(column, set){
+      //setter($cell, value, row, col, this);
+      var out_css   = column.output_css;
+      var validator = column.output_validator;
+      var formatter = column.output_formatter;
+      var init_data = column.init_data;
+      var setter    = column.setter;
+      var setter2   = (formatter) ? function($cell, v, row, col, _this){ return setter($cell, formatter(v), row, col, _this); } : setter;
+      var setter3   = (out_css)   ? function($cell, v, row, col, _this){ return setter2($cell.css(out_css(v)), v, row, col, _this); } : setter2;
+      var setter4   = (validator) ? function($cell, v, row, col, _this){ return setter3($cell, validator(v) ? v : init_data, row, col, _this); } : setter3; 
+      return setter4;
+    })(column, set);
+
+    // input functions
+    column.getter          = column.getter          || set.getter;
+    column.input_validator = column.input_validator || set.input_validator;
+    column.input_formatter = column.input_formatter || set.input_formatter;
+    column.input_caster    = column.input_caster    || set.input_caster;
+
+    column.data_push = (function data_push(){
+
+      var getter    = column.getter;
+      var validator = column.input_validator;
+      var formatter = column.input_formatter || function(v){ return v };
+      var slicer    = column.input_slicer    || function(v){ return v };
+      var caster    = column.input_caster    || function(v){ return v };
+      var out_css   = column.output_css;
+      var after_input = column.after_input;
+      
+      function get_result (v_string, validator, loc) {
+        if(! validator)
+          return v_string;
+        else if(validator(v_string))
+          return caster( slicer(v_string));
+        else
+          return _this.data[loc.row][loc.col];
+      }
+    
+      return function($cell, loc, value){
+
+        var result = get_result(formatter(value), validator, loc);
+
+        if($cell && out_css) $cell.css(out_css(result));
+        
+        if(after_input) after_input($cell, loc, result);
+
+        return result;
+      };
+    })(); // end of data_push
+
+    return column;
+  }, this);
+
+  return scheme;
+};;"use strict";
 
 /** 사용자 정의 데이터 타입 */
 FGR.prototype.custom_cell_define = {};
@@ -3669,3 +4168,4 @@ function _create_modal_div(){
 FGR.prototype.get_modified_rows = function(){
   return this.data.filter(function(row) { return row.modified } );
 };
+;return FGR; })(jQuery);  // end of codes

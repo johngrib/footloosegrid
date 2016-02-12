@@ -8,7 +8,14 @@ module.exports = function(grunt) {
         separator: ';',
       },
       dist: {
-        src: ['src/time.js', 'src/footloosegrid.js'],
+        src: ['src/time.js', 
+              'src/head.js',
+              'src/utilities.js',
+              'src/configure.js',
+              'src/initializer.js',
+              'src/footloosegrid.js',
+              'src/tail.js'
+              ],
         dest: 'dist/footloosegrid.js',
       }
     },
@@ -24,8 +31,8 @@ module.exports = function(grunt) {
   });
 
   // Load the plugin that provides the "uglify" task.
-  grunt.loadNpmTasks('grunt-contrib-uglify');
   grunt.loadNpmTasks('grunt-contrib-concat');
+  grunt.loadNpmTasks('grunt-contrib-uglify');
 
   // Default task(s).
   grunt.registerTask('default', ['concat', 'uglify']);
