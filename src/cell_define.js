@@ -13,16 +13,17 @@ FGR.prototype.event_handler.change_val = function(e, evt_process) {
   var before   = this.data[loc.row][loc.col];
   var editable = this.is_editable_cell(loc.row, loc.col);
   var cell     = this.event_handler.cell = { editable: editable, loc: loc, };
+  var $cell, column, after;
 
   if (editable) {
-    var $cell = $(e.target);
-    var column = this.scheme[loc.col];
+    $cell  = $(e.target);
+    column = this.scheme[loc.col];
     this.data[loc.row][loc.col] = column.data_push($cell, loc, column.getter($cell));
   } else {
     return this.refresh();
   }
 
-  var after = this.data[loc.row][loc.col];
+  after = this.data[loc.row][loc.col];
 
   if(before !== after && evt_process === undefined){
     this.data[loc.row].modified = true;
@@ -127,7 +128,7 @@ function _create_cell_define(_this){
   }
 
   //setter($cell, value, row, col, this);
-  var cell_def     = {};
+  var cell_def      = {};
   var std_setter   = function ($cell,v) { return $cell.val(v) };
   var std_getter   = function ($cell  ) { return $cell.val( ) };
   var text_setter  = function ($cell,v) { return $cell.text(v) };
@@ -135,12 +136,12 @@ function _create_cell_define(_this){
   var check_setter = function ($cell,v) { return $cell.prop('checked', _.isNumber(v) && v > 0) };
   var check_getter = function ($cell  ) { return $cell.prop('checked') ? 1 : 0; };
   var key_down     = function (e) { _move_focus(e, _this); };      // key_down 시 cursor focused 를 이동한다.
-  var change_val   = _this.event_handler.change_val.bind(_this);  // 값을 편집할 수 있게 하는 최중요 펑션
-  var focus_in     = _this.event_handler.focus_in.bind(_this);
-  var focus_out_num= _this.event_handler.focus_out_number.bind(_this);
+  var change_val    = _this.event_handler.change_val.bind(_this);  // 값을 편집할 수 있게 하는 최중요 펑션
+  var focus_in      = _this.event_handler.focus_in.bind(_this);
+  var focus_out_num = _this.event_handler.focus_out_number.bind(_this);
 
-  var tmp_focus_out= _this.event_handler.focus_out.bind(_this);
-  var tmp_focus_num= _this.event_handler.focus_number.bind(_this);
+  var tmp_focus_out = _this.event_handler.focus_out.bind(_this);
+  var tmp_focus_num = _this.event_handler.focus_number.bind(_this);
 
   var focus_out = _set_interceptor_2_(tmp_focus_out, change_val, false);  // focus_out 실행전에는 change_val 이 먼저 실행된다
   var focus_num = _set_interceptor_2_(tmp_focus_num, focus_in, undefined);  // focus_num 실행전에는 focus_in 이 먼저 실행된다
