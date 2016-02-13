@@ -15,6 +15,6 @@
 
 ## Sample Page
 * [with d3.js](https://johngrib.herokuapp.com/article/2016/20160128_inbody.html)
-* [drill down/up, with google map](https://johngrib.herokuapp.com/article/2016/20160128_inbody.html)
+* [drill down/up, with google map](https://johngrib.herokuapp.com/article/2016/20160201_addresstest.html)
 
 * header label merge
