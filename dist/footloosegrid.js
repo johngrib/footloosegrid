@@ -2692,19 +2692,22 @@ FGR.prototype.paint_rows = function(_this){
  */
 function _create_calc_row(){
 
-  if( ! this.cfg.calc_row) return this;
+  if( ! this.cfg.calc_row)
+    return this;
 
   this.scheme.forEach(function(v,i) {
     var div  = (i < this.cfg.fixed_header) ? 'calc_left' : 'calc_right';
     var attr = {
       readonly : true,
       id       : this.get_id() + '_calc_cell_' + i,
-      disabled : v.type.match(/check|radio/),
+      disabled : v.type.match(/check|radio/),  // check, radio 타입인 경우 계산셀이 disabled 상태로 만들어진다.
     };
 
     this.calc_cell[i].attr(attr).css('border-left', '1px solid transparent').appendTo(this.div[div]);
 
-    if(attr.disabled) this.calc_cell[i].find('input').attr('disabled', true);
+    if(attr.disabled)
+      this.calc_cell[i].find('input').attr('disabled', true);
+
   }.bind(this));
   return this;
 };
@@ -2717,11 +2720,12 @@ FGR.prototype.calc_calc_cell = function(col_index){
 
   var col = this.scheme[col_index];
 
-  if(col.calc_row === undefined) return '';
+  if(col.calc_row === undefined)
+    return '';
 
   // col.calc_row 의 값으로는 'sum', 'avg', 'max', 'min' 등, FGR.prototype.calc 에 정의된 값들이 들어간다.
   var calc_result = this.calc[col.calc_row](this, col_index);
-  return col.calc_title + calc_result;
+  return col.calc_title + '' + calc_result;
 };
 
 /**
@@ -2737,15 +2741,13 @@ FGR.prototype.calc = {
     return _to_comma_format(value);
   },
   avg: function (_this, col_index) {
-    for(var i = 0, cnt = 0, sum = 0; i < _this.data.length; ++i){
-      var v = _this.data[i][col_index];
-      if(!_.isNull(v)){
-        sum += v;
-        ++cnt;
-      }
-    }
-    return (sum/cnt).toLocaleString('en');
-    //return _to_comma_format(sum/cnt);
+    
+    var not_null = function(v  ) { return ! _.isNull(v[col_index]); };
+    var add      = function(a,b) { return a + b; };
+    var filtered = _this.data.filter(not_null);
+    var result   = filtered.reduce(add) / filtered.length;
+    
+    return (result).toLocaleString('en');
   },
   max: function (_this, col_index) {
     var max = Number.MIN_SAFE_INTEGER;
