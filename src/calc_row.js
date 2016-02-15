@@ -54,10 +54,10 @@ FGR.prototype.calc = {
   },
   avg: function (_this, col_index) {
     
-    var not_null = function(v  ) { return ! _.isNull(v[col_index]); };
-    var add      = function(a,b) { return a + b; };
+    var not_null = function(v  ) { return v[col_index] != null };
+    var add      = function(a,b) { return a + b[col_index]; };
     var filtered = _this.data.filter(not_null);
-    var result   = filtered.reduce(add) / filtered.length;
+    var result   = filtered.reduce(add, 0) / filtered.length;
     
     return (result).toLocaleString('en');
   },

@@ -213,9 +213,9 @@ function _create_cell_define(_this){
     getter    : std_getter,
     setter    : std_setter,
     init_data : null,
-    input_validator: _is_number_str,
+    input_validator: function (v) { return /^\s*$/.test(v) || _is_number_str(v) },
     input_formatter: function (v) { return v.replace(/,/g, '') },
-    input_caster   : Number,
+    input_caster   : function (v) { return /^\s*$/.test(v) ? null : Number(v); },
     event : {
       keydown : key_down,
       keyup   : change_val,
