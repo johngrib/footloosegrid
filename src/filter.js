@@ -463,7 +463,7 @@ FGR.prototype.collect_filter_functions = function(){
   var val       = div.find('input[name='+_id+'_filter_cond_value]');
   var functions = [];
 
-  _.range(op.length).forEach( function(i) {
+  U.range(op.length).forEach( function(i) {
       var is_empty_value = /^\s*$/.test(val.eq(i).val());
 
       if(is_empty_value) return;
@@ -509,7 +509,7 @@ FGR.prototype.data_filter = function(is_matched_data, target_column){
   _this.pre_filter_data = _this.data;
   
   // 필터링 작업을 수행한다
-  var do_filter = _.isFunction(is_matched_data);
+  var do_filter = U.isFunction(is_matched_data);
 
   // 필터링 결과를 담을 배열을 선언한다. 추후 이 배열이 this.data 에 입력된다.
   _this.data = do_filter ? _this.data.filter(is_matched_data) : _this.data;

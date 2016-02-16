@@ -14,9 +14,9 @@ function FGR(id, cfg, scheme) {
   // getter methods
   this.get_id              = _make_const_getter(id);
   this.get_original_cfg    = _make_const_getter($.extend(true, {}, cfg));
-  this.get_original_scheme = _make_const_getter(scheme.map(_.clone));
-  this.get_gen_col         = _make_const_getter(_.findIndex(scheme, { 'type': 'gen' }));        // gen 넘버 컬럼 인덱스
-  this.get_gen_label_col   = _make_const_getter(_.findIndex(scheme, { 'type': 'gen_label' }));  // gen_label 넘버 컬럼 인덱스
+  this.get_original_scheme = _make_const_getter(scheme.map(U.clone));
+  this.get_gen_col         = _make_const_getter(U.findIndex(scheme, { 'type': 'gen' }));        // gen 넘버 컬럼 인덱스
+  this.get_gen_label_col   = _make_const_getter(U.findIndex(scheme, { 'type': 'gen_label' }));  // gen_label 넘버 컬럼 인덱스
   this.get_IE_version      = _make_const_getter(_check_ie_version());
   this.is_IE               = _make_const_getter(_check_ie_version() > 0);
   this.is_IE               = _make_const_getter(this.get_IE_version() > 0);
@@ -49,7 +49,7 @@ function FGR(id, cfg, scheme) {
   _create_col_style(this, 0);       // 각 컬럼별 css 스타일 생성 (0 번 컬럼부터 시작)
 
   // sort / filter 관련
-  this.cfg.sort      = _.findIndex(this.scheme, { sort: true }) >= 0;
+  this.cfg.sort      = U.findIndex(this.scheme, { sort: true }) >= 0;
   this.sorted_column = -1;
   this.filtered      = false;
   this.sorted        = false;
@@ -298,7 +298,7 @@ function _create_rows(_this, data, callback){
 
     var scheme_length = _this.scheme.length;
     
-    _.range(from, to).forEach( function(i) {
+    U.range(from, to).forEach( function(i) {
 
       _this.rows[i] = [ temp_row[0].clone(true, true), temp_row[1].clone(true, true)];
       _this.cell[i] = [];
@@ -315,7 +315,7 @@ function _create_rows(_this, data, callback){
       set_row(i, 1, _this);
       
       return;
-    }); // end of _.range.forEach
+    }); // end of U.range.forEach
 
     _this.scroll_v_inner.height(to * _this.cfg.row_height);
     return; 
@@ -336,7 +336,7 @@ function _create_header(div_index, start, end){
     this.blur();
   };
   
-  var range = _.range(start, end);
+  var range = U.range(start, end);
   
   this.header_labels.forEach(function(v, row) {
     range.forEach(function(col) {
@@ -396,7 +396,7 @@ function _get_header_labels_array(){
 
   var _this  = this;
   var temp   = this.scheme.map(function(col) { return col.label.split('||') });
-  var range  = _.range(_.max(temp.map(function(v) { return v.length })));
+  var range  = U.range(U.max(temp.map(function(v) { return v.length })));
   var labels = range.map(function(r) { return [] });
   
   // temp 배열을 pivot 하여 labels 배열을 완성한다.
@@ -439,7 +439,7 @@ function _create_merge_v_header(){
   var col_cnt = this.scheme.length;
   var row_cnt = this.header_labels.length;
 
-  _.range(col_cnt).forEach(function(col) {
+  U.range(col_cnt).forEach(function(col) {
     for (var row = row_cnt - 1; row > 0; --row) {
       if(labels[row][col] === undefined){
         var upper_cell   = this.get_header_cell(row-1, col);
@@ -468,7 +468,7 @@ function _create_merge_v_header(){
 function _create_merge_h_header(){
 
   var labels    = this.header_labels;
-  var row_range = _.range(this.header_labels.length);
+  var row_range = U.range(this.header_labels.length);
 
   function merge_job (start_col, end_col) {
     
@@ -531,7 +531,7 @@ function _create_adjust_header_cell_v_loc(_this){
  */
 function _create_proto_row(start, end, row_width){
   var row  = $('<div>').addClass(_style.row).height(this.cfg.row_height);
-  _.range(start, end).forEach( function(i) {
+  U.range(start, end).forEach( function(i) {
     return this.proto.cell[i].clone(true, true).appendTo(row);
   }.bind(this));
   return row;
@@ -595,7 +595,7 @@ function _create_cell(cell_scheme, element, index, height, mode){
     type   : is_calc_row ? 'text' : set.type
   };
   
-  if(_.isNumber(cell_scheme.size)) attr.maxlength = cell_scheme.size;
+  if(U.isNumber(cell_scheme.size)) attr.maxlength = cell_scheme.size;
 
   // 2. 사용자 입력 cell 생성
   var cell = $('<' + (element || set.element) + '>', attr);
@@ -606,7 +606,7 @@ function _create_cell(cell_scheme, element, index, height, mode){
 
   // 3. 이벤트 bind
   if(!element && set.event) {
-    _.map(set.event, function(func, evt_name) { return cell[evt_name](func) });
+    U.map(set.event, function(func, evt_name) { return cell[evt_name](func) });
   }
 
   // checkbox, radio 인 경우의 처리
@@ -629,7 +629,7 @@ function _create_cell(cell_scheme, element, index, height, mode){
  */
 function _create_col_style(_this, col_index){
 
-  _.range(col_index, _this.scheme.length).forEach(function(i) {
+  U.range(col_index, _this.scheme.length).forEach(function(i) {
 
     var v       = _this.scheme[i];
     var set     = _this.get_cell_define()[v.type];
@@ -646,7 +646,7 @@ function _create_col_style(_this, col_index){
     };
     
     var exp_header = '.' + css_name + ' {';
-    var exp_body   = _.reduce(attr, function(before, current, key) { return ( before + key + ':' + current + ';') }, '');
+    var exp_body   = U.reduce(attr, function(before, current, key) { return ( before + key + ':' + current + ';') }, '');
     var exp_tail   = '}';
     
     _insert_new_styles(_this, css_name, exp_header + exp_body + exp_tail);
@@ -662,7 +662,7 @@ function _create_col_style(_this, col_index){
 FGR.prototype.create_init_data = function(row_count){
   var row_cnt = row_count || this.cfg.rows_show;
   var row     = this.scheme.map(function(col) { return col.init_data });
-  return _.range(row_cnt).map(function() { return row.slice(0) });
+  return U.range(row_cnt).map(function() { return row.slice(0) });
 };
 
 /**
@@ -757,7 +757,7 @@ function _create_buttons(_this){
     var row        = _toInt($(this).attr('row'));
     var parent_row = _this.data[row];
 
-    if( ! _.isArray(parent_row.children)) return;
+    if( ! U.isArray(parent_row.children)) return;
     
     var temp_head = _this.data.slice(0, row + 1);
     var temp_body = parent_row.children;
@@ -838,14 +838,14 @@ function _size_setting() {
   var fence      = cfg.fixed_header;
   var end        = scheme.length;
   var border     = cfg.border_size = 0;
-  var is_cols    = _.isNumber(cfg.cols_show) && cfg.cols_show > 0;
-  var is_rows    = _.isNumber(cfg.rows_show) && cfg.rows_show > 0;
-  var show_width = _.chain(scheme).slice(fence, fence + cfg.cols_show).pluck('width').reduce(_add_func, 0);
+  var is_cols    = U.isNumber(cfg.cols_show) && cfg.cols_show > 0;
+  var is_rows    = U.isNumber(cfg.rows_show) && cfg.rows_show > 0;
+  var show_width = U.chain(scheme).slice(fence, fence + cfg.cols_show).pluck('width').reduce(_add_func, 0);
 
   cfg.header_height    = this.header_labels.length * cfg.row_height + 1;
   
-  cfg.left_width = _.chain(scheme).slice(start, fence).pluck('width').reduce(_add_func, 0); // row_label width : 왼쪽
-  cfg.right_width = _.chain(scheme).slice(fence, end).pluck('width').reduce(_add_func, 0); // data_table width: 오른쪽
+  cfg.left_width = U.chain(scheme).slice(start, fence).pluck('width').reduce(_add_func, 0); // row_label width : 왼쪽
+  cfg.right_width = U.chain(scheme).slice(fence, end).pluck('width').reduce(_add_func, 0); // data_table width: 오른쪽
   
   cfg.right_width_show = is_cols ? show_width + (border * cfg.cols_show)  // cols_show 옵션이 있다면 width 를 계산한다
     : cfg.width - cfg.left_width;                                       // 옵션이 없다면 주어진 width 값을 사용한다
@@ -933,10 +933,10 @@ function _tbl_setting(){
     function create_tr () { return $('<tr>'); };
     function create_td () { return $('<td>', {height: _this.cfg.row_height, valign: 'top'}); };
 
-    var col_range = _.range(col);
+    var col_range = U.range(col);
     var $tbl      = $('<table>', attribute);
     
-    _.range(row).forEach(function() {
+    U.range(row).forEach(function() {
       var $tr = create_tr().appendTo($tbl);
       col_range.forEach( function() { return create_td().appendTo($tr) });
     });

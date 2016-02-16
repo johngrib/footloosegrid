@@ -176,7 +176,7 @@ function _attatch_evt_excel(_this){
 
     if(sheet == null || sheet["!ref"] == null) return [];
 
-    var date_type_exist = _.some(scheme, function(col) { return ( col.type === 'date' ) });
+    var date_type_exist = U.some(scheme, function(col) { return ( col.type === 'date' ) });
     
     // 문제 있음 : 날짜 형식 체크 과정이 병목.
     var typefy;
@@ -191,11 +191,11 @@ function _attatch_evt_excel(_this){
     var range     = safe_decode_range(sheet["!ref"]);
     var start_col = range.s.c;
     var end_col   = range.e.c;
-    var col_range = _.range(start_col, end_col + 1);
+    var col_range = U.range(start_col, end_col + 1);
     var cols      = col_range.map( function(c) { return XLSX.utils.encode_col(c) });
 
     var C, txt, val, col_index;
-    var data = _.range(range.s.r, range.e.r + 1).map(function(Row) {
+    var data = U.range(range.s.r, range.e.r + 1).map(function(Row) {
       var one_row = [];
       var rr      = XLSX.utils.encode_row(Row);
 
@@ -450,7 +450,7 @@ function _attatch_evt_paste(_this){
  * _this : FGR 객체
  */
 function _attatch_evt(event_arr, event_func){
-  if(_.isFunction(event_func)){
+  if(U.isFunction(event_func)){
     event_arr.push(event_func);
     return true;
   }

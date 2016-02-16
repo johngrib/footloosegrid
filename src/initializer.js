@@ -52,7 +52,7 @@ function _scheme_initialize(scheme){
   function _get_column (col) {
     if(! col.type) throw new Error('need column type.');
     var def  = _default_scheme[col.type];
-    var defn = (_.isString(def)) ? _default_scheme[def] : def;
+    var defn = (U.isString(def)) ? _default_scheme[def] : def;
     return _insert_undefined_values(col, defn);
   }
   
@@ -84,7 +84,7 @@ function _scheme_initialize(scheme){
       column.date = (column.date) ? _insert_undefined_values(column.date, date_cfg) : date_cfg;
     }
 
-    if(! column.format_regexp && column.size && _.isNumber(column.size)){
+    if(! column.format_regexp && column.size && U.isNumber(column.size)){
       column.format_regexp = new RegExp('(^.{0,' + _toInt(column.size) + '}).*$');
     } else if(column.format){
       var point_length = column.format.replace(/^(#+\.)/, '').length;

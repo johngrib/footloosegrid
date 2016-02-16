@@ -112,7 +112,7 @@ FGR.prototype.refresh_calc_cell = function(col_index){
     });
 
   // col_index 로 지정된 컬럼만을 계산한다.
-  } else if (_.isNumber(col_index)){
+  } else if (U.isNumber(col_index)){
     if(_this.scheme[col_index].calc_row)
       _this.calc_cell[col_index].val(_this.calc_calc_cell(col_index));
   }

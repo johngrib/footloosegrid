@@ -97,7 +97,7 @@ FGR.prototype.event_handler.focus_out_number = function (e){
   var loc    = this.get_loc(e.target);
   var v      = this.data[loc.row][loc.col];
   var $this  = $(e.target);
-  var is_null= (_.isNull(v) || /^\s*$/.test(v));
+  var is_null= (U.isNull(v) || /^\s*$/.test(v));
 
   if(is_null)
     $this.val(null);
@@ -133,7 +133,7 @@ function _create_cell_define(_this){
   var std_getter   = function ($cell  ) { return $cell.val( ) };
   var text_setter  = function ($cell,v) { return $cell.text(v) };
   var text_getter  = function ($cell  ) { return $cell.text( ) };
-  var check_setter = function ($cell,v) { return $cell.prop('checked', _.isNumber(v) && v > 0) };
+  var check_setter = function ($cell,v) { return $cell.prop('checked', U.isNumber(v) && v > 0) };
   var check_getter = function ($cell  ) { return $cell.prop('checked') ? 1 : 0; };
   var key_down     = function (e) { _move_focus(e, _this); };      // key_down 시 cursor focused 를 이동한다.
   var change_val    = _this.event_handler.change_val.bind(_this);  // 값을 편집할 수 있게 하는 최중요 펑션
@@ -164,12 +164,12 @@ function _create_cell_define(_this){
     style     : _style.input,
     width_adj : -11,
     //output_css      : undefined,
-    //output_validator: _.isString,
+    //output_validator: U.isString,
     //output_formatter: undefined,
     getter    : std_getter,
     setter    : std_setter,
     init_data : null,
-    //input_validator: _.isString,
+    //input_validator: U.isString,
     //input_formatter: undefined,
     //input_caster   : String,
     event : {
@@ -186,12 +186,12 @@ function _create_cell_define(_this){
     style     : _style.input,
     width_adj : -11,
     //output_css      : undefined,
-    //output_validator: _.isString,
+    //output_validator: U.isString,
     //output_formatter: undefined,
     getter    : std_getter,
     setter    : std_setter,
     init_data : null,
-    //input_validator: _.isString,
+    //input_validator: U.isString,
     //input_formatter: undefined,
     //input_caster   : String,
     event : {
@@ -208,7 +208,7 @@ function _create_cell_define(_this){
     style     : _style.input,
     width_adj : -11,
     output_css      : function (v) { return { color: (v < 0) ? 'red' : 'black' }; }, // return css style by number
-    output_validator: _.isNumber,
+    output_validator: U.isNumber,
     output_formatter: _to_comma_format, // return number comma format applied
     getter    : std_getter,
     setter    : std_setter,
@@ -235,7 +235,7 @@ function _create_cell_define(_this){
     getter    : check_getter,
     setter    : check_setter,
     init_data : 0,
-    input_validator: _.isNumber,
+    input_validator: U.isNumber,
     //input_formatter: undefined,
     //input_caster   : undefined,
     event : { change : change_val, },
@@ -247,12 +247,12 @@ function _create_cell_define(_this){
     style     : _style.check,
     width_adj : 0,
     //output_css      : undefined,
-    //output_validator: _.isNumber,
+    //output_validator: U.isNumber,
     //output_formatter: undefined,
     getter    : check_getter,
     setter    : check_setter,
     init_data : 0,
-    //input_validator: _.isString,
+    //input_validator: U.isString,
     //input_formatter: undefined,
     //input_caster   : String,
     after_input: function($cell, loc, value){

@@ -220,7 +220,7 @@ function _adjust_scroll_v(_this, row_count){
   var cnt = (function() {
     if(row_count === 'visible')
       return _this.div.data_table.find('.' + _style.row + ':visible').length;
-    else if(_.isNumber(row_count))
+    else if(U.isNumber(row_count))
       return row_count;
   })();
 

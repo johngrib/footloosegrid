@@ -3,5 +3,7 @@
  * Copyright 2015 Lee JongRip (이종립, a.k.a. John Grib) and other contributors; 
  * Licensed MIT 
  */
+var U = require('underscore');
+
 window.footloosegrid = (function _create_footloosegrid_function($){
   // 이 중괄호는 열린 상태로 놔두어야 함.

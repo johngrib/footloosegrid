@@ -21,7 +21,7 @@ FGR.prototype.modal = function(text, button){
   var modal  = this.div.modal;
   var body   = modal.find('div[role=body]');
   var cont   = modal.find('div[role=control]');
-  var disable= function(d) { if(_.isBoolean(d)) _this.disable(d); };
+  var disable= function(d) { if(U.isBoolean(d)) _this.disable(d); };
   var func   = {
       obj : modal,
       show: function (d) { modal.show(); disable(d); },

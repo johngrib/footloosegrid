@@ -5,12 +5,16 @@ function time_end(msg){
   console.log(msg + ' : ' + result);
   return result;
 }
-;/* FootlooseGrid - v3.0 - 2015-12-26
+
+window.time_start = time_start;
+window.time_end = time_end;;/* FootlooseGrid - v3.0 - 2015-12-26
  * https://github.com/johngrib/FootlooseGrid
  * Copyright 2015 Lee JongRip (이종립, a.k.a. John Grib) and other contributors; 
  * Licensed MIT 
  */
-var footloosegrid = (function _create_footloosegrid_function($){
+var U = require('underscore');
+
+window.footloosegrid = (function _create_footloosegrid_function($){
   // 이 중괄호는 열린 상태로 놔두어야 함.
 ;// getter 생성기
 function _make_const_getter(v) {
@@ -63,7 +67,7 @@ QUnit.test("_to_comma_format", function( assert ) {
   assert.ok(rs1 === '123,456,789.1234567',"Passed!" );
 
   var rs2 = _to_comma_format(undefined);
-  assert.ok(_.isUndefined(rs2),"Passed!" );
+  assert.ok(U.isUndefined(rs2),"Passed!" );
 });
 
 /** default_obj 에 존재하는 key/value 값이 target_obj 에 존재하지 않는다면 해당 key/value 값을 복사해 입력해 준다 */
@@ -408,7 +412,7 @@ function _scheme_initialize(scheme){
   function _get_column (col) {
     if(! col.type) throw new Error('need column type.');
     var def  = _default_scheme[col.type];
-    var defn = (_.isString(def)) ? _default_scheme[def] : def;
+    var defn = (U.isString(def)) ? _default_scheme[def] : def;
     return _insert_undefined_values(col, defn);
   }
   
@@ -440,7 +444,7 @@ function _scheme_initialize(scheme){
       column.date = (column.date) ? _insert_undefined_values(column.date, date_cfg) : date_cfg;
     }
 
-    if(! column.format_regexp && column.size && _.isNumber(column.size)){
+    if(! column.format_regexp && column.size && U.isNumber(column.size)){
       column.format_regexp = new RegExp('(^.{0,' + _toInt(column.size) + '}).*$');
     } else if(column.format){
       var point_length = column.format.replace(/^(#+\.)/, '').length;
@@ -618,7 +622,7 @@ FGR.prototype.event_handler.focus_out_number = function (e){
   var loc    = this.get_loc(e.target);
   var v      = this.data[loc.row][loc.col];
   var $this  = $(e.target);
-  var is_null= (_.isNull(v) || /^\s*$/.test(v));
+  var is_null= (U.isNull(v) || /^\s*$/.test(v));
 
   if(is_null)
     $this.val(null);
@@ -654,7 +658,7 @@ function _create_cell_define(_this){
   var std_getter   = function ($cell  ) { return $cell.val( ) };
   var text_setter  = function ($cell,v) { return $cell.text(v) };
   var text_getter  = function ($cell  ) { return $cell.text( ) };
-  var check_setter = function ($cell,v) { return $cell.prop('checked', _.isNumber(v) && v > 0) };
+  var check_setter = function ($cell,v) { return $cell.prop('checked', U.isNumber(v) && v > 0) };
   var check_getter = function ($cell  ) { return $cell.prop('checked') ? 1 : 0; };
   var key_down     = function (e) { _move_focus(e, _this); };      // key_down 시 cursor focused 를 이동한다.
   var change_val    = _this.event_handler.change_val.bind(_this);  // 값을 편집할 수 있게 하는 최중요 펑션
@@ -685,12 +689,12 @@ function _create_cell_define(_this){
     style     : _style.input,
     width_adj : -11,
     //output_css      : undefined,
-    //output_validator: _.isString,
+    //output_validator: U.isString,
     //output_formatter: undefined,
     getter    : std_getter,
     setter    : std_setter,
     init_data : null,
-    //input_validator: _.isString,
+    //input_validator: U.isString,
     //input_formatter: undefined,
     //input_caster   : String,
     event : {
@@ -707,12 +711,12 @@ function _create_cell_define(_this){
     style     : _style.input,
     width_adj : -11,
     //output_css      : undefined,
-    //output_validator: _.isString,
+    //output_validator: U.isString,
     //output_formatter: undefined,
     getter    : std_getter,
     setter    : std_setter,
     init_data : null,
-    //input_validator: _.isString,
+    //input_validator: U.isString,
     //input_formatter: undefined,
     //input_caster   : String,
     event : {
@@ -729,7 +733,7 @@ function _create_cell_define(_this){
     style     : _style.input,
     width_adj : -11,
     output_css      : function (v) { return { color: (v < 0) ? 'red' : 'black' }; }, // return css style by number
-    output_validator: _.isNumber,
+    output_validator: U.isNumber,
     output_formatter: _to_comma_format, // return number comma format applied
     getter    : std_getter,
     setter    : std_setter,
@@ -756,7 +760,7 @@ function _create_cell_define(_this){
     getter    : check_getter,
     setter    : check_setter,
     init_data : 0,
-    input_validator: _.isNumber,
+    input_validator: U.isNumber,
     //input_formatter: undefined,
     //input_caster   : undefined,
     event : { change : change_val, },
@@ -768,12 +772,12 @@ function _create_cell_define(_this){
     style     : _style.check,
     width_adj : 0,
     //output_css      : undefined,
-    //output_validator: _.isNumber,
+    //output_validator: U.isNumber,
     //output_formatter: undefined,
     getter    : check_getter,
     setter    : check_setter,
     init_data : 0,
-    //input_validator: _.isString,
+    //input_validator: U.isString,
     //input_formatter: undefined,
     //input_caster   : String,
     after_input: function($cell, loc, value){
@@ -933,9 +937,9 @@ function FGR(id, cfg, scheme) {
   // getter methods
   this.get_id              = _make_const_getter(id);
   this.get_original_cfg    = _make_const_getter($.extend(true, {}, cfg));
-  this.get_original_scheme = _make_const_getter(scheme.map(_.clone));
-  this.get_gen_col         = _make_const_getter(_.findIndex(scheme, { 'type': 'gen' }));        // gen 넘버 컬럼 인덱스
-  this.get_gen_label_col   = _make_const_getter(_.findIndex(scheme, { 'type': 'gen_label' }));  // gen_label 넘버 컬럼 인덱스
+  this.get_original_scheme = _make_const_getter(scheme.map(U.clone));
+  this.get_gen_col         = _make_const_getter(U.findIndex(scheme, { 'type': 'gen' }));        // gen 넘버 컬럼 인덱스
+  this.get_gen_label_col   = _make_const_getter(U.findIndex(scheme, { 'type': 'gen_label' }));  // gen_label 넘버 컬럼 인덱스
   this.get_IE_version      = _make_const_getter(_check_ie_version());
   this.is_IE               = _make_const_getter(_check_ie_version() > 0);
   this.is_IE               = _make_const_getter(this.get_IE_version() > 0);
@@ -968,7 +972,7 @@ function FGR(id, cfg, scheme) {
   _create_col_style(this, 0);       // 각 컬럼별 css 스타일 생성 (0 번 컬럼부터 시작)
 
   // sort / filter 관련
-  this.cfg.sort      = _.findIndex(this.scheme, { sort: true }) >= 0;
+  this.cfg.sort      = U.findIndex(this.scheme, { sort: true }) >= 0;
   this.sorted_column = -1;
   this.filtered      = false;
   this.sorted        = false;
@@ -1217,7 +1221,7 @@ function _create_rows(_this, data, callback){
 
     var scheme_length = _this.scheme.length;
     
-    _.range(from, to).forEach( function(i) {
+    U.range(from, to).forEach( function(i) {
 
       _this.rows[i] = [ temp_row[0].clone(true, true), temp_row[1].clone(true, true)];
       _this.cell[i] = [];
@@ -1234,7 +1238,7 @@ function _create_rows(_this, data, callback){
       set_row(i, 1, _this);
       
       return;
-    }); // end of _.range.forEach
+    }); // end of U.range.forEach
 
     _this.scroll_v_inner.height(to * _this.cfg.row_height);
     return; 
@@ -1255,7 +1259,7 @@ function _create_header(div_index, start, end){
     this.blur();
   };
   
-  var range = _.range(start, end);
+  var range = U.range(start, end);
   
   this.header_labels.forEach(function(v, row) {
     range.forEach(function(col) {
@@ -1315,7 +1319,7 @@ function _get_header_labels_array(){
 
   var _this  = this;
   var temp   = this.scheme.map(function(col) { return col.label.split('||') });
-  var range  = _.range(_.max(temp.map(function(v) { return v.length })));
+  var range  = U.range(U.max(temp.map(function(v) { return v.length })));
   var labels = range.map(function(r) { return [] });
   
   // temp 배열을 pivot 하여 labels 배열을 완성한다.
@@ -1358,7 +1362,7 @@ function _create_merge_v_header(){
   var col_cnt = this.scheme.length;
   var row_cnt = this.header_labels.length;
 
-  _.range(col_cnt).forEach(function(col) {
+  U.range(col_cnt).forEach(function(col) {
     for (var row = row_cnt - 1; row > 0; --row) {
       if(labels[row][col] === undefined){
         var upper_cell   = this.get_header_cell(row-1, col);
@@ -1387,7 +1391,7 @@ function _create_merge_v_header(){
 function _create_merge_h_header(){
 
   var labels    = this.header_labels;
-  var row_range = _.range(this.header_labels.length);
+  var row_range = U.range(this.header_labels.length);
 
   function merge_job (start_col, end_col) {
     
@@ -1450,7 +1454,7 @@ function _create_adjust_header_cell_v_loc(_this){
  */
 function _create_proto_row(start, end, row_width){
   var row  = $('<div>').addClass(_style.row).height(this.cfg.row_height);
-  _.range(start, end).forEach( function(i) {
+  U.range(start, end).forEach( function(i) {
     return this.proto.cell[i].clone(true, true).appendTo(row);
   }.bind(this));
   return row;
@@ -1514,7 +1518,7 @@ function _create_cell(cell_scheme, element, index, height, mode){
     type   : is_calc_row ? 'text' : set.type
   };
   
-  if(_.isNumber(cell_scheme.size)) attr.maxlength = cell_scheme.size;
+  if(U.isNumber(cell_scheme.size)) attr.maxlength = cell_scheme.size;
 
   // 2. 사용자 입력 cell 생성
   var cell = $('<' + (element || set.element) + '>', attr);
@@ -1525,7 +1529,7 @@ function _create_cell(cell_scheme, element, index, height, mode){
 
   // 3. 이벤트 bind
   if(!element && set.event) {
-    _.map(set.event, function(func, evt_name) { return cell[evt_name](func) });
+    U.map(set.event, function(func, evt_name) { return cell[evt_name](func) });
   }
 
   // checkbox, radio 인 경우의 처리
@@ -1548,7 +1552,7 @@ function _create_cell(cell_scheme, element, index, height, mode){
  */
 function _create_col_style(_this, col_index){
 
-  _.range(col_index, _this.scheme.length).forEach(function(i) {
+  U.range(col_index, _this.scheme.length).forEach(function(i) {
 
     var v       = _this.scheme[i];
     var set     = _this.get_cell_define()[v.type];
@@ -1565,7 +1569,7 @@ function _create_col_style(_this, col_index){
     };
     
     var exp_header = '.' + css_name + ' {';
-    var exp_body   = _.reduce(attr, function(before, current, key) { return ( before + key + ':' + current + ';') }, '');
+    var exp_body   = U.reduce(attr, function(before, current, key) { return ( before + key + ':' + current + ';') }, '');
     var exp_tail   = '}';
     
     _insert_new_styles(_this, css_name, exp_header + exp_body + exp_tail);
@@ -1581,7 +1585,7 @@ function _create_col_style(_this, col_index){
 FGR.prototype.create_init_data = function(row_count){
   var row_cnt = row_count || this.cfg.rows_show;
   var row     = this.scheme.map(function(col) { return col.init_data });
-  return _.range(row_cnt).map(function() { return row.slice(0) });
+  return U.range(row_cnt).map(function() { return row.slice(0) });
 };
 
 /**
@@ -1676,7 +1680,7 @@ function _create_buttons(_this){
     var row        = _toInt($(this).attr('row'));
     var parent_row = _this.data[row];
 
-    if( ! _.isArray(parent_row.children)) return;
+    if( ! U.isArray(parent_row.children)) return;
     
     var temp_head = _this.data.slice(0, row + 1);
     var temp_body = parent_row.children;
@@ -1757,14 +1761,14 @@ function _size_setting() {
   var fence      = cfg.fixed_header;
   var end        = scheme.length;
   var border     = cfg.border_size = 0;
-  var is_cols    = _.isNumber(cfg.cols_show) && cfg.cols_show > 0;
-  var is_rows    = _.isNumber(cfg.rows_show) && cfg.rows_show > 0;
-  var show_width = _.chain(scheme).slice(fence, fence + cfg.cols_show).pluck('width').reduce(_add_func, 0);
+  var is_cols    = U.isNumber(cfg.cols_show) && cfg.cols_show > 0;
+  var is_rows    = U.isNumber(cfg.rows_show) && cfg.rows_show > 0;
+  var show_width = U.chain(scheme).slice(fence, fence + cfg.cols_show).pluck('width').reduce(_add_func, 0);
 
   cfg.header_height    = this.header_labels.length * cfg.row_height + 1;
   
-  cfg.left_width = _.chain(scheme).slice(start, fence).pluck('width').reduce(_add_func, 0); // row_label width : 왼쪽
-  cfg.right_width = _.chain(scheme).slice(fence, end).pluck('width').reduce(_add_func, 0); // data_table width: 오른쪽
+  cfg.left_width = U.chain(scheme).slice(start, fence).pluck('width').reduce(_add_func, 0); // row_label width : 왼쪽
+  cfg.right_width = U.chain(scheme).slice(fence, end).pluck('width').reduce(_add_func, 0); // data_table width: 오른쪽
   
   cfg.right_width_show = is_cols ? show_width + (border * cfg.cols_show)  // cols_show 옵션이 있다면 width 를 계산한다
     : cfg.width - cfg.left_width;                                       // 옵션이 없다면 주어진 width 값을 사용한다
@@ -1852,10 +1856,10 @@ function _tbl_setting(){
     function create_tr () { return $('<tr>'); };
     function create_td () { return $('<td>', {height: _this.cfg.row_height, valign: 'top'}); };
 
-    var col_range = _.range(col);
+    var col_range = U.range(col);
     var $tbl      = $('<table>', attribute);
     
-    _.range(row).forEach(function() {
+    U.range(row).forEach(function() {
       var $tr = create_tr().appendTo($tbl);
       col_range.forEach( function() { return create_td().appendTo($tr) });
     });
@@ -2069,7 +2073,7 @@ function _attatch_evt_excel(_this){
 
     if(sheet == null || sheet["!ref"] == null) return [];
 
-    var date_type_exist = _.some(scheme, function(col) { return ( col.type === 'date' ) });
+    var date_type_exist = U.some(scheme, function(col) { return ( col.type === 'date' ) });
     
     // 문제 있음 : 날짜 형식 체크 과정이 병목.
     var typefy;
@@ -2084,11 +2088,11 @@ function _attatch_evt_excel(_this){
     var range     = safe_decode_range(sheet["!ref"]);
     var start_col = range.s.c;
     var end_col   = range.e.c;
-    var col_range = _.range(start_col, end_col + 1);
+    var col_range = U.range(start_col, end_col + 1);
     var cols      = col_range.map( function(c) { return XLSX.utils.encode_col(c) });
 
     var C, txt, val, col_index;
-    var data = _.range(range.s.r, range.e.r + 1).map(function(Row) {
+    var data = U.range(range.s.r, range.e.r + 1).map(function(Row) {
       var one_row = [];
       var rr      = XLSX.utils.encode_row(Row);
 
@@ -2343,7 +2347,7 @@ function _attatch_evt_paste(_this){
  * _this : FGR 객체
  */
 function _attatch_evt(event_arr, event_func){
-  if(_.isFunction(event_func)){
+  if(U.isFunction(event_func)){
     event_arr.push(event_func);
     return true;
   }
@@ -2661,7 +2665,7 @@ function _adjust_scroll_v(_this, row_count){
   var cnt = (function() {
     if(row_count === 'visible')
       return _this.div.data_table.find('.' + _style.row + ':visible').length;
-    else if(_.isNumber(row_count))
+    else if(U.isNumber(row_count))
       return row_count;
   })();
 
@@ -2800,7 +2804,7 @@ FGR.prototype.refresh_calc_cell = function(col_index){
     });
 
   // col_index 로 지정된 컬럼만을 계산한다.
-  } else if (_.isNumber(col_index)){
+  } else if (U.isNumber(col_index)){
     if(_this.scheme[col_index].calc_row)
       _this.calc_cell[col_index].val(_this.calc_calc_cell(col_index));
   }
@@ -2878,7 +2882,7 @@ FGR.prototype.Load_data = function(data, callback, filter, is_use_caster){
       }
 
     // B. JSON Array 의 경우 (아마도 가장 일반적인 경우)
-    } else if(Array.isArray(data) && _.isObject(data[0])){
+    } else if(Array.isArray(data) && U.isObject(data[0])){
       temp_data = [];
 
       for(i = 0; i < data.length; ++i){
@@ -2902,7 +2906,7 @@ FGR.prototype.Load_data = function(data, callback, filter, is_use_caster){
       _this.data = temp_data;
     }
     
-    if(_.isFunction(filter)) _this.data = _this.data.filter(filter);
+    if(U.isFunction(filter)) _this.data = _this.data.filter(filter);
 
   })(this);
 
@@ -2933,7 +2937,7 @@ FGR.prototype.Load_data = function(data, callback, filter, is_use_caster){
   // 6. calc_cell 계산값 표현
   this.refresh_calc_cell();
 
-  if(_.isFunction(callback)) callback();
+  if(U.isFunction(callback)) callback();
 
   return this; };
 
@@ -3020,7 +3024,7 @@ FGR.prototype.Delete_row = function(input_row, col){
  */
 FGR.prototype.Get_checked = function(column){
   
-  var col     = (_.isString(col)) ? _.findIndex(this.scheme, {name: col}) : column;
+  var col     = (U.isString(col)) ? U.findIndex(this.scheme, {name: col}) : column;
   var checked = [];
   
   this.data.forEach(function(row, i){
@@ -3237,7 +3241,7 @@ FGR.prototype.clear = function(){
  */
 FGR.prototype.scroll_row = function(move){
   
-  if(! _.isNumber(move) || this.row_selected >= this.data.length)
+  if(! U.isNumber(move) || this.row_selected >= this.data.length)
     return this;
   
   var row_cnt = (function() {
@@ -3277,7 +3281,7 @@ FGR.prototype.disable = function(disable, opacity, color, z){
 
   this.div.cover[disable ? 'show' : 'hide']();
 
-  if(_.isNumber(opacity))  this.div.cover.css('opacity', opacity);
+  if(U.isNumber(opacity))  this.div.cover.css('opacity', opacity);
   if(color !== undefined) this.div.cover.css('background-color', color);
   if(z     !== undefined) this.div.cover.css('z-index', z);
 
@@ -3798,7 +3802,7 @@ FGR.prototype.collect_filter_functions = function(){
   var val       = div.find('input[name='+_id+'_filter_cond_value]');
   var functions = [];
 
-  _.range(op.length).forEach( function(i) {
+  U.range(op.length).forEach( function(i) {
       var is_empty_value = /^\s*$/.test(val.eq(i).val());
 
       if(is_empty_value) return;
@@ -3844,7 +3848,7 @@ FGR.prototype.data_filter = function(is_matched_data, target_column){
   _this.pre_filter_data = _this.data;
   
   // 필터링 작업을 수행한다
-  var do_filter = _.isFunction(is_matched_data);
+  var do_filter = U.isFunction(is_matched_data);
 
   // 필터링 결과를 담을 배열을 선언한다. 추후 이 배열이 this.data 에 입력된다.
   _this.data = do_filter ? _this.data.filter(is_matched_data) : _this.data;
@@ -3971,7 +3975,7 @@ function _create_search_div(){
     var op      = options;
     var flag    = $(this).prop('checked');
     var disable = function (obj, flag) { return obj.attr('disabled', flag).css('opacity', flag ? 0.3 : 1) };
-    [].concat( _.values(op.whole_word), _.values(op.wild_card) ).forEach( function(o) { disable(o, flag) });
+    [].concat( U.values(op.whole_word), U.values(op.wild_card) ).forEach( function(o) { disable(o, flag) });
   });
 
   // close 버튼 
@@ -4121,7 +4125,7 @@ FGR.prototype.modal = function(text, button){
   var modal  = this.div.modal;
   var body   = modal.find('div[role=body]');
   var cont   = modal.find('div[role=control]');
-  var disable= function(d) { if(_.isBoolean(d)) _this.disable(d); };
+  var disable= function(d) { if(U.isBoolean(d)) _this.disable(d); };
   var func   = {
       obj : modal,
       show: function (d) { modal.show(); disable(d); },
