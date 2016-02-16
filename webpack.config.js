@@ -1,5 +1,5 @@
 module.exports = {
-  entry: './build/footloosegrid.min.js',
+  entry: './dist/footloosegrid.js',
   output: {
     path : __dirname,
     filename: './build/footloosegrid.bundle.js'
