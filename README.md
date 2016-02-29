@@ -11,7 +11,7 @@
 * Chrome
 * Firefox
 * Edge
-* IE ( footloosegrid.4.ie11.js 사용 )
+* IE 11
 
 ## Sample Page
 * [with d3.js](https://johngrib.herokuapp.com/article/2016/20160128_inbody.html)
