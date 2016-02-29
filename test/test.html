@@ -20,17 +20,17 @@
     }
 
 </style>
-<script src="https://code.jquery.com/qunit/qunit-1.21.0.js"></script>
-<script src="../lib/underscore-min.js"></script>
+<!-- <script src="https://code.jquery.com/qunit/qunit-1.21.0.js"></script> -->
 <script src="../lib/jquery-1.11.3.min.js"></script>
 <script src="../lib/jquery-ui.min.js"></script>
 <script src="../lib/FileSaver.min.js"></script>
 <script src="../lib/jszip.min.js"></script>
 <script src="../lib/xlsx.min.js"></script>
 <!--<script src="../footloosegrid.4.ie11.noconst.test.js"></script>-->
-<script src="../dist/footloosegrid.js"></script>
-<script src="test.js"></script>
-<script type="text/javascript">
+<!-- <script src="../dist/footloosegrid.js"></script> -->
+<script src="../build/footloosegrid.min.js"></script>
+<!-- <script src="test.js"></script>
+ --><script type="text/javascript">
 
   // sample data 생성 규칙 정의
   var data_generate = {
@@ -274,9 +274,6 @@
       var blob = new Blob(data, {type: "text/plain;charset=utf-8"});
       saveAs(blob, 'test.csv');
     });
-    
-    unit_test();
-  
   });    // end of document ready
 
   
@@ -319,7 +316,7 @@ row 삭제 기능
   <option>f.Delete_row([0,2,4]); // 0,2,4 번째 row 삭제 </option>
 </select>
 <br>
-<div id="qunit"></div>
+<!-- <div id="qunit"></div>
 <div id="qunit-fixture"></div>
-</body>
+ --></body>
 </html>

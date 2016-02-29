@@ -92,7 +92,7 @@ function _create_search_div(){
     var op      = options;
     var flag    = $(this).prop('checked');
     var disable = function (obj, flag) { return obj.attr('disabled', flag).css('opacity', flag ? 0.3 : 1) };
-    [].concat( _.values(op.whole_word), _.values(op.wild_card) ).forEach( function(o) { disable(o, flag) });
+    [].concat( U.values(op.whole_word), U.values(op.wild_card) ).forEach( function(o) { disable(o, flag) });
   });
 
   // close 버튼 

@@ -43,14 +43,6 @@ var _to_comma_format = (function() {
     }
   };
 })();
-// UNIT TEST
-QUnit.test("_to_comma_format", function( assert ) {
-  var rs1 = _to_comma_format(123456789.1234567);
-  assert.ok(rs1 === '123,456,789.1234567',"Passed!" );
-
-  var rs2 = _to_comma_format(undefined);
-  assert.ok(_.isUndefined(rs2),"Passed!" );
-});
 
 /** default_obj 에 존재하는 key/value 값이 target_obj 에 존재하지 않는다면 해당 key/value 값을 복사해 입력해 준다 */
 function _insert_undefined_values(target_obj, default_obj) { 

@@ -70,7 +70,7 @@ FGR.prototype.Load_data = function(data, callback, filter, is_use_caster){
       }
 
     // B. JSON Array 의 경우 (아마도 가장 일반적인 경우)
-    } else if(Array.isArray(data) && _.isObject(data[0])){
+    } else if(Array.isArray(data) && U.isObject(data[0])){
       temp_data = [];
 
       for(i = 0; i < data.length; ++i){
@@ -94,7 +94,7 @@ FGR.prototype.Load_data = function(data, callback, filter, is_use_caster){
       _this.data = temp_data;
     }
     
-    if(_.isFunction(filter)) _this.data = _this.data.filter(filter);
+    if(U.isFunction(filter)) _this.data = _this.data.filter(filter);
 
   })(this);
 
@@ -125,7 +125,7 @@ FGR.prototype.Load_data = function(data, callback, filter, is_use_caster){
   // 6. calc_cell 계산값 표현
   this.refresh_calc_cell();
 
-  if(_.isFunction(callback)) callback();
+  if(U.isFunction(callback)) callback();
 
   return this; };
 
@@ -212,7 +212,7 @@ FGR.prototype.Delete_row = function(input_row, col){
  */
 FGR.prototype.Get_checked = function(column){
   
-  var col     = (_.isString(col)) ? _.findIndex(this.scheme, {name: col}) : column;
+  var col     = (U.isString(col)) ? U.findIndex(this.scheme, {name: col}) : column;
   var checked = [];
   
   this.data.forEach(function(row, i){
@@ -429,7 +429,7 @@ FGR.prototype.clear = function(){
  */
 FGR.prototype.scroll_row = function(move){
   
-  if(! _.isNumber(move) || this.row_selected >= this.data.length)
+  if(! U.isNumber(move) || this.row_selected >= this.data.length)
     return this;
   
   var row_cnt = (function() {
@@ -469,7 +469,7 @@ FGR.prototype.disable = function(disable, opacity, color, z){
 
   this.div.cover[disable ? 'show' : 'hide']();
 
-  if(_.isNumber(opacity))  this.div.cover.css('opacity', opacity);
+  if(U.isNumber(opacity))  this.div.cover.css('opacity', opacity);
   if(color !== undefined) this.div.cover.css('background-color', color);
   if(z     !== undefined) this.div.cover.css('z-index', z);
 
