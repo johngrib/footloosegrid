@@ -64,4 +64,5 @@ function _create_modal_div(){
 // TODO : 필터 기능 적용시 체크박스와 라디오버튼 조건으로 true/false 선택하게 할 것.
 // TODO : calc column 추가하고, 중간 sum 기능 추가할 것
 // TODO : hide_empty_rows 옵션을 추가할 것.
+// TODO : jQuery 의존을 제거한다.
 
